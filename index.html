@@ -458,7 +458,7 @@
 
   <footer>
     <div class="l">
-      <b>规则</b> 6~9 绊按星级（5★ 3 / 4★ 2 / 3★ 1，2★ 仅 8-9 绊、1★ 仅 9 绊、0★ 按 1★）；10 绊以上按已解锁的羁绊上限，每级 30 颗，15 绊封顶。
+      <b>规则</b> 6~9 绊按星级（5★ 3 / 4★ 2 / 3★ 1，2★ 仅 8-9 绊、1★ 仅 9 绊、0★ 每级 2）；10 绊以上按已解锁的羁绊上限，每级 30 颗，15 绊封顶。
     </div>
     <div>单文件版 · 无网络请求</div>
   </footer>
@@ -484,7 +484,7 @@ const REWARD_RULES = {
   3: {6:1, 7:1, 8:1, 9:1},
   2: {8:1, 9:1},
   1: {9:1},
-  0: {9:1}
+  0: {6:2, 7:2, 8:2, 9:2}   /* 安格拉·曼纽：6~9 绊每级 2 颗 */
 };
 const DREAMFIRE_QUARTZ = 30;
 const BOND_CAP_MAX     = 15;
@@ -760,7 +760,7 @@ function render(){
   if (S.capped10 > 0) notes.push(`另有 ${S.capped10} 人已顶在 10 绊上限，想再往上必须先喂梦火（未计入）。`);
   if (S.zeros.length){
     const zs = S.zeros.reduce((a,s) => a + s.remain, 0);
-    notes.push(`0★（${S.zeros.map(s=>esc(s.name)).join('、')}）默认按 1★ 计入 6~9 段，本次贡献 ${zs} 个；若游戏内 0★ 无此奖励，6~9 段应为 ${g.remain - zs} 个。`);
+    notes.push(`0★（${S.zeros.map(s=>esc(s.name)).join('、')}）为单独档位：6~9 绊每级 2 颗，合计 ${zs} 颗，已含在 6~9 段内。`);
   }
 
   document.getElementById('report').innerHTML = `
@@ -1032,11 +1032,14 @@ const F_SANS = '"Microsoft YaHei UI", "PingFang SC", sans-serif';
 function buildPng(S){
   const g0 = S.sums;
   const LIGHT = curTheme() === 'light';
-  const W = 540, M = 22, scale = 2;   /* 540×2 = 1080 宽，手机竖屏 */
+  const W = 540, M = 22;               /* 逻辑坐标系，保持现有排版不变 */
+  const OUT_W = 1179;                  /* 输出宽度：iPhone 15 Pro / 14 Pro */
+  const MIN_DEV_H = 2556;              /* 输出最小高度：同上，铺满一屏 */
+  const scale = OUT_W / W;
   const HMAX = 1400;
 
   const cv = document.createElement('canvas');
-  cv.width = W * scale; cv.height = HMAX * scale;
+  cv.width = OUT_W; cv.height = Math.ceil(HMAX * scale);
   const g = cv.getContext('2d');
   g.scale(scale, scale);
   g.textBaseline = 'top';
@@ -1106,7 +1109,7 @@ function buildPng(S){
   tx(bt, 92, '700', LIGHT ? BLUE : INK, M - 2, y, 'left', F_COND);
   const bw = meas(bt, 92, '700', F_COND);
   tx('颗圣晶石', 13, 'normal', INK2, M + bw + 8, y + 60, 'left', F_SANS);
-  y += 112;                      /* 给 92px 大数字留出呼吸，避免分隔线被读成下划线 */
+  y += 120;                      /* 给 92px 大数字留出呼吸，避免分隔线被读成下划线 */
   line(M, y, W - M, y, LN);
   y += 16;
 
@@ -1125,7 +1128,7 @@ function buildPng(S){
     tx(k, 10, 'normal', INK2, x, y + row * 50, 'left', F_SANS);
     tx(String(v), 25, '700', c, x, y + row * 50 + 14, 'left', F_COND);
   });
-  y += 96;
+  y += 100;
   line(M, y, W - M, y, LN);
   y += 16;
 
@@ -1143,7 +1146,7 @@ function buildPng(S){
 
   /* ---------- 圣晶石构成 ---------- */
   secH(y, '02', '圣晶石构成', '按星级');
-  y += 24;
+  y += 28;
   const cx = M + 56, cy = y + 46, rad = 40;
   g.beginPath(); g.strokeStyle = TRACK; g.lineWidth = 7; g.arc(cx, cy, rad, 0, 7); g.stroke();
   let st = -90;
@@ -1170,14 +1173,14 @@ function buildPng(S){
     tx(`${r.rarity}★`, 10.5, 'normal', INK2, lx + 12, ly + 1, 'left', F_SANS);
     tx(fmt(r.value), 11, '700', INK, lx + 104, ly, 'right', F_MONO);
   });
-  y += 96;
+  y += 104;
 
   /* ---------- 从者分布 ---------- */
   secH(y, '03', '从者分布', `${S.servants.length} 名`);
-  y += 26;
+  y += 28;
   const maxCount = Math.max(1, ...S.rarityRows.map(r => r.count));
   S.rarityRows.forEach((r, i) => {
-    const ry = y + i * 23;
+    const ry = y + i * 24;
     tx(`${r.rarity}★`, 10.5, 'normal', INK2, M, ry + 1, 'left', F_SANS);
     const gx = M + 34, gw = W - M * 2 - 34 - 40;
     rect(gx, ry + 3, gw, 7, LN, TRACK);
@@ -1186,41 +1189,45 @@ function buildPng(S){
     g.globalAlpha = 1;
     tx(String(r.count), 10, 'normal', INK3, W - M, ry + 1, 'right', F_MONO);
   });
-  y += S.rarityRows.length * 23 + 12;
+  y += S.rarityRows.length * 24 + 14;
 
   /* ---------- 剩余最多 ---------- */
   secH(y, '04', '剩余最多的从者', '含梦火段');
-  y += 24;
+  y += 28;
   line(M, y, W - M, y, LN2);
   y += 8;
   if (!S.top.length) tx('全部从者的 6~9 绊奖励都已领完。', 11, 'normal', INK3, M, y + 4);
   S.top.forEach((s, i) => {
-    const ry = y + i * 30;
+    const ry = y + i * 32;
     tx(pad2(i + 1), 9, 'normal', INK3, M, ry + 4, 'left', F_MONO);
     g.fillStyle = color(s.rarity); g.fillRect(M + 20, ry + 2, 3, 13);
     tx(s.name, 11.5, 'normal', INK, M + 30, ry + 1, 'left', F_SANS);
     const bond = s.dreamfire > 0 ? `${s.rank}/${s.rankMax}` : `${s.rank}`;
     tx(`羁绊 ${bond}`, 9.5, 'normal', INK3, W - M - 40, ry + 4, 'right', F_SANS);
     tx(`+${s.remain + s.dreamfire}`, 13, '700', INK, W - M, ry, 'right', F_COND);
-    if (i < S.top.length - 1) line(M, ry + 24, W - M, ry + 24, LN);
+    if (i < S.top.length - 1) line(M, ry + 26, W - M, ry + 26, LN);
   });
-  y += Math.max(1, S.top.length) * 30 + 10;
+  y += Math.max(1, S.top.length) * 32 + 14;
 
   /* ---------- 画幅与页脚 ---------- */
-  const finalH = Math.max(960, Math.ceil(y + 42));
+  const naturalH = Math.ceil((y + 42) * scale);
+  /* 内容接近一屏（差 18% 以内）才补到 2556 整屏；内容很少时保持自然高度，避免出现大片空白 */
+  const devH = naturalH >= MIN_DEV_H * 0.82 ? Math.max(MIN_DEV_H, naturalH) : naturalH;
+  const finalH = devH / scale;
   const fy = finalH - 40;
   line(M, fy - 12, W - M, fy - 12, LN2);
   tx(`数据来源  ${S.fileName}`, 8.5, 'normal', INK3, M, fy, 'left', F_MONO);
   const now = new Date();
   tx(`生成于  ${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
      8.5, 'normal', INK3, W - M, fy, 'right', F_MONO);
-  tx('规则  6~9 绊按星级（5★3 / 4★2 / 3★1，2★8-9、1★9、0★按1★）· 10 绊以上每级 30 · 15 绊封顶',
+  tx('规则  6~9 绊按星级（5★3 / 4★2 / 3★1，2★8-9、1★9、0★每级2）· 10 绊以上每级 30 · 15 绊封顶',
      8, 'normal', LIGHT ? '#8B949D' : '#5A636D', M, fy + 15, 'left', F_SANS);
 
   /* ---------- 裁剪到实际高度 ---------- */
   const out = document.createElement('canvas');
-  out.width = W * scale; out.height = finalH * scale;
-  out.getContext('2d').drawImage(cv, 0, 0, W * scale, finalH * scale, 0, 0, W * scale, finalH * scale);
+  out.width = OUT_W; out.height = devH;
+  const og = out.getContext('2d');
+  og.drawImage(cv, 0, 0, OUT_W, devH, 0, 0, OUT_W, devH);
   return out;
 }
 
