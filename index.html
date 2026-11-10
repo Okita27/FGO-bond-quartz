@@ -1,0 +1,1290 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>羁绊圣晶石计算器</title>
+<style>
+  /* ============ 令牌：夜间（默认） ============ */
+  :root{
+    --bg:#07090C;
+    --surface:#0A0D12;
+    --surface-soft:#0A0D12;
+    --grid:rgba(122,146,186,.048);
+    --glow:rgba(61,82,255,.10);
+    --track:#12161B;
+    --scr:#0C0F13;
+    --line:#23282F;
+    --line-2:#39414B;
+    --rule:#2C323A;
+    --ink:#EDF1F4;
+    --ink-2:#98A2AB;
+    --ink-3:#7E8891;
+    --note-c:#7C858E;
+    --hint-c:#8B949D;
+    --blue:#3D52FF;
+    --blue-lt:#7B8BFF;
+    --blue-dim:rgba(61,82,255,.14);
+    --num:#EDF1F4;
+    --hl:#EDE81E;
+    --warn:#EDE81E;
+    --warn-bg:rgba(237,232,30,.05);
+    --warn-ink:#EDE81E;
+    --err:#FF5A5A;
+    --err-bg:rgba(255,90,90,.07);
+    --err-ink:#FF7A7A;
+    --sheet-shadow:0 14px 40px rgba(0,0,0,.30);
+    --cond:"Bahnschrift","Arial Narrow","DIN Alternate","Helvetica Neue",Impact,sans-serif;
+    --mono:"Cascadia Mono","Consolas","SF Mono",monospace;
+    --sans:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+  }
+  /* ============ 令牌：日间（浅底 + 宝蓝） ============ */
+  [data-theme="light"]{
+    --bg:#F4F5F7;
+    --surface:#FFFFFF;
+    --surface-soft:#FFFFFF;
+    --grid:rgba(27,47,201,.055);
+    --glow:rgba(27,47,201,.05);
+    --track:#E6E9EE;
+    --scr:#EDEFF2;
+    --line:#E2E6EB;
+    --line-2:#BFC7D0;
+    --rule:#D2D8DF;
+    --ink:#0C1118;
+    --ink-2:#49545F;
+    --ink-3:#7B858E;
+    --note-c:#5E6873;
+    --hint-c:#6E7883;
+    --blue:#1B2FC9;
+    --blue-lt:#3A4DE0;
+    --blue-dim:rgba(27,47,201,.07);
+    --num:#1B2FC9;
+    --hl:#1B2FC9;
+    --warn:#B07D00;
+    --warn-bg:rgba(176,125,0,.06);
+    --warn-ink:#8A6200;
+    --err:#C62828;
+    --err-bg:rgba(198,40,40,.05);
+    --err-ink:#B3261E;
+    --sheet-shadow:0 12px 34px rgba(22,32,54,.09);
+  }
+
+  *{box-sizing:border-box}
+  html{overflow-x:hidden;scroll-behavior:smooth;background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  body{
+    margin:0;min-height:100vh;min-height:100dvh;overflow-x:hidden;color:var(--ink);
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(1000px 460px at 50% -8%, var(--glow), transparent 68%),
+      repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 72px),
+      repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 72px);
+    font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased;
+    transition:background-color .2s, color .2s;
+  }
+
+  /* ---------- 外壳 ---------- */
+  .shell{
+    position:relative;z-index:2;max-width:1000px;margin:0 auto;padding:0 26px 74px;
+    display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;
+  }
+  .top,#report,footer{flex:0 0 auto}
+
+  /* ---------- 顶栏 ---------- */
+  .top{
+    display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;
+    padding:26px 0 16px;border-bottom:1px solid var(--line-2);
+  }
+  .brand{display:flex;align-items:flex-end;gap:14px}
+  .mk{
+    width:34px;height:34px;border:1px solid var(--blue);position:relative;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .mk::before{content:"";position:absolute;inset:6px;border-left:1px solid var(--blue);border-bottom:1px solid var(--blue)}
+  .mk::after{content:"";width:8px;height:8px;background:var(--blue)}
+  .eyebrow{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--ink-3);
+    margin-bottom:7px;
+  }
+  [data-theme="light"] .eyebrow{color:#6B7480}
+  h1{margin:0;font-family:var(--sans);font-size:23px;font-weight:700;letter-spacing:.06em;line-height:1}
+
+
+  .top-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .meta{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink-3);text-align:right;line-height:2;text-transform:uppercase;max-width:340px}
+  .meta b{display:inline-block;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;color:var(--ink-2);font-weight:400}
+
+  .dot{display:inline-block;width:5px;height:5px;background:var(--blue);margin-right:7px;vertical-align:1px}
+
+  .mode-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-2);background:transparent;border:1px solid var(--line-2);
+    padding:7px 11px;cursor:pointer;transition:.15s;
+  }
+  .mode-btn:hover{border-color:var(--blue);color:var(--blue)}
+  .mode-btn .sw{width:8px;height:8px;background:var(--blue);display:block;flex:0 0 auto}
+
+  /* ---------- 导入 ---------- */
+  .drop{
+    flex:0 0 auto;margin-top:auto;margin-bottom:auto;
+    border:1px solid var(--line-2);background:var(--surface-soft);
+    padding:58px 30px 54px;text-align:center;cursor:pointer;position:relative;
+    transition:border-color .16s, background-color .16s;box-shadow:var(--sheet-shadow);
+  }
+  .drop:hover,.drop.over{border-color:var(--blue);background:var(--blue-dim)}
+  .drop .cnr{position:absolute;width:11px;height:11px;border:0 solid var(--line-2);transition:border-color .16s}
+  .drop:hover .cnr,.drop.over .cnr{border-color:var(--blue)}
+  .cnr.a{left:-1px;top:-1px;border-left-width:2px;border-top-width:2px}
+  .cnr.b{right:-1px;top:-1px;border-right-width:2px;border-top-width:2px}
+  .cnr.c{left:-1px;bottom:-1px;border-left-width:2px;border-bottom-width:2px}
+  .cnr.d{right:-1px;bottom:-1px;border-right-width:2px;border-bottom-width:2px}
+  .drop .idx{
+    position:absolute;left:16px;top:13px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:.24em;color:var(--ink-3);text-transform:uppercase;
+  }
+  .drop-en{
+    font-family:var(--sans);font-size:46px;font-weight:700;letter-spacing:.16em;
+    line-height:1;color:var(--ink);
+  }
+  .drop-en .sl{color:var(--blue);margin:0 10px;font-weight:400}
+  .drop-cn{margin-top:16px;font-size:14px;letter-spacing:.14em;color:var(--ink-2)}
+  .drop-note{
+    margin:22px auto 0;max-width:520px;font-family:var(--sans);font-size:12.5px;line-height:2;
+    letter-spacing:.02em;color:var(--note-c);
+  }
+  .drop-hint{margin-top:20px;font-family:var(--sans);font-size:12px;letter-spacing:.08em;color:var(--ink-2)}
+  .drop.hidden{display:none}
+
+  /* ---------- 按钮 ---------- */
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:26px 0 0}
+  .btn{
+    font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--ink);background:transparent;border:1px solid var(--line-2);
+    padding:12px 18px;cursor:pointer;transition:.15s;
+  }
+  .btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+  .btn.prime{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.prime:hover{background:var(--blue-lt);border-color:var(--blue-lt);color:#fff}
+
+  /* ---------- 图纸面板 ---------- */
+  .sheet{
+    margin-top:22px;padding:26px 24px 8px;
+    background:var(--surface);border:1px solid var(--line-2);
+    box-shadow:var(--sheet-shadow);position:relative;
+  }
+  .sheet::before{
+    content:"";position:absolute;left:-1px;top:-1px;width:14px;height:14px;
+    border-left:2px solid var(--blue);border-top:2px solid var(--blue);
+  }
+  .sheet > .sec:first-child{margin-top:0}
+
+  /* ---------- 分节 ---------- */
+  .sec{margin-top:34px}
+  .sec-h{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+  .sec-h .num{
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--blue);
+    border:1px solid var(--blue);padding:3px 6px;line-height:1;
+  }
+  .sec-h .en{
+    font-family:var(--sans);font-size:13.5px;font-weight:700;letter-spacing:.06em;
+    color:var(--ink);
+  }
+  .sec-h .rule{flex:1;height:1px;background:var(--rule)}
+  .sec-h .tail{font-family:var(--sans);font-size:11.5px;letter-spacing:.04em;color:var(--ink-3)}
+
+  /* ---------- 总览 ---------- */
+  .ov{display:grid;grid-template-columns:auto 1fr;gap:44px;align-items:end}
+  .ov-hero{display:flex;flex-direction:column}
+  .ov-label{font-family:var(--sans);font-size:12px;letter-spacing:.06em;color:var(--ink-2);margin-bottom:12px}
+  .ov-num{display:flex;align-items:baseline;gap:14px}
+  .ov-num .big{
+    font-family:var(--cond);font-size:118px;font-weight:700;line-height:.78;
+    letter-spacing:-.035em;font-variant-numeric:tabular-nums;color:var(--num);
+  }
+  .ov-num .unit{
+    font-family:var(--sans);font-size:15px;letter-spacing:.06em;color:var(--ink-2);
+  }
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);margin:0;padding:0;list-style:none;border-left:1px solid var(--line-2)}
+  .kpi li{padding:2px 0 2px 20px;border-right:1px solid var(--line);}
+  .kpi li:last-child{border-right:0}
+  .kpi .k{display:block;font-family:var(--sans);font-size:11.5px;letter-spacing:.04em;color:var(--ink-2)}
+  .kpi .v{
+    display:block;margin-top:8px;font-family:var(--cond);font-size:27px;font-weight:700;
+    line-height:1;font-variant-numeric:tabular-nums;
+  }
+  .kpi li.hl .v{color:var(--hl)}
+
+  .bar-row{margin-top:26px}
+  .bar-h{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--sans);font-size:11.5px;letter-spacing:.03em;color:var(--ink-2);margin-bottom:9px}
+  .bar-h b{color:var(--ink);font-weight:700}
+  .bar-h em{color:var(--blue-lt);font-style:normal;margin-left:12px}
+  .bar{position:relative;height:9px;background:var(--track);border:1px solid var(--line);overflow:hidden}
+  .bar > i{position:absolute;left:0;top:0;bottom:0;background:var(--blue)}
+  .bar > u{
+    position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),var(--bg) calc(10% - 1px),var(--bg) 10%);
+  }
+
+  /* ---------- 两栏 ---------- */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:34px}
+  .cols .sec{margin-top:34px}
+
+  .bd{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+  .ring{width:168px;height:168px;flex:0 0 auto}
+  .legend{list-style:none;margin:0;padding:0}
+  .legend li{
+    display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--line);
+    font-family:var(--sans);font-size:12.5px;letter-spacing:.02em;
+  }
+  .legend li:last-child{border-bottom:0}
+  .legend .sw{width:8px;height:8px;flex:0 0 auto}
+  .legend .lb{color:var(--ink-2)}
+  .legend .vl{margin-left:auto;font-weight:700;color:var(--ink);font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  .dist{list-style:none;margin:0;padding:0}
+  .dist li{display:grid;grid-template-columns:30px 1fr 44px;gap:12px;align-items:center;padding:7px 0}
+  .dist .s{font-family:var(--sans);font-size:12px;letter-spacing:.02em;color:var(--ink-2)}
+  .dist .g{position:relative;height:7px;background:var(--track);border:1px solid var(--line)}
+  .dist .g > i{display:block;height:100%}
+  .dist .n{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);text-align:right;letter-spacing:.02em}
+
+  /* ---------- 榜单 ---------- */
+  .list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line-2)}
+  .list li{
+    display:grid;grid-template-columns:40px 3px 1fr auto auto;gap:14px;align-items:center;
+    padding:9px 2px;border-bottom:1px solid var(--line);
+  }
+  .list .i{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em}
+  .list .tick{width:3px;height:15px}
+  .list .n{font-size:13.5px;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .list .b{font-family:var(--sans);font-size:11.5px;color:var(--ink-3);letter-spacing:.02em}
+  .list .v{font-family:var(--cond);font-size:16px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;min-width:46px;text-align:right}
+
+  /* ---------- 表格 ---------- */
+  .tbl{width:100%;border-collapse:collapse}
+  .tbl th{
+    font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--ink-2);
+    text-align:right;padding:0 10px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap;
+  }
+  .tbl th:first-child,.tbl td:first-child{text-align:left}
+  .tbl td{
+    padding:10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.01em;font-variant-numeric:tabular-nums;
+  }
+  .tbl td.nm{font-family:var(--sans);font-size:13px;text-align:left;letter-spacing:.02em}
+  .tbl tbody tr:hover{background:var(--blue-dim)}
+  .tbl tfoot td{border-bottom:0;border-top:1px solid var(--line-2);color:var(--hl);font-weight:700;padding-top:11px}
+  .tbl .dim{color:var(--ink-3)}
+  .tbl td.rar{font-family:var(--sans);font-weight:700;font-size:13px}
+  .dist .s,.legend .lb{font-family:var(--sans)}
+  .tscroll{overflow-x:auto}
+  .scroll{max-height:400px;overflow:auto;border-bottom:1px solid var(--line)}
+  .scroll::-webkit-scrollbar{width:8px;height:8px}
+  .scroll::-webkit-scrollbar-thumb{background:var(--line-2)}
+  .scroll::-webkit-scrollbar-track{background:var(--scr)}
+
+  /* ---------- 折叠 / 说明 ---------- */
+  details{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  summary{
+    cursor:pointer;list-style:none;display:flex;align-items:center;gap:9px;
+    font-family:var(--sans);font-size:12.5px;letter-spacing:.04em;color:var(--ink-2);font-weight:600;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"";width:7px;height:7px;border-right:1px solid var(--blue);border-bottom:1px solid var(--blue);transform:rotate(-45deg);transition:transform .2s;margin-right:2px}
+  details[open] summary::before{transform:rotate(45deg)}
+  .note{
+    font-family:var(--sans);font-size:12px;line-height:2;letter-spacing:.01em;color:var(--note-c);
+    margin-top:10px;
+  }
+  .note b{color:var(--ink-2);font-weight:400}
+  .cmp-delta{
+    font-family:var(--cond);font-size:19px;font-weight:700;letter-spacing:.02em;
+    color:var(--hl);margin:8px 0 12px;
+  }
+
+  /* ---------- 提示 ---------- */
+  .alert{border:1px solid var(--warn);background:var(--warn-bg);padding:16px 18px;margin-top:16px}
+  .alert-h{display:flex;align-items:center;gap:10px;font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:.03em;color:var(--warn-ink);margin-bottom:10px}
+  .alert ul{margin:0;padding-left:16px;font-size:12px;line-height:2;color:var(--ink-2)}
+  .err{border-color:var(--err);background:var(--err-bg)}
+  .err .alert-h{color:var(--err-ink)}
+  .err code{display:block;margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--err-ink);line-height:1.9;word-break:break-all}
+
+  footer{
+    margin-top:44px;padding-top:16px;border-top:1px solid var(--line-2);
+    font-family:var(--mono);font-size:9.5px;line-height:2.1;letter-spacing:.08em;color:var(--ink-3);
+    display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;
+  }
+  footer .l{max-width:640px}
+  footer b{color:var(--ink-2);font-weight:400}
+
+  /* ---------- 导出弹层 ---------- */
+  .dlg{position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(4,7,10,.8)}
+  .dlg[hidden]{display:none}
+  .dlg-box{
+    width:min(520px,100%);max-height:calc(100vh - 28px);max-height:calc(100dvh - 28px);
+    display:flex;flex-direction:column;background:var(--surface);
+    border:1px solid var(--line-2);box-shadow:0 24px 70px rgba(0,0,0,.55);
+  }
+  .dlg-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line-2)}
+  .dlg-t{font-size:13.5px;font-weight:700;letter-spacing:.04em;color:var(--ink)}
+  .dlg-x{
+    font-family:var(--sans);font-size:12px;color:var(--ink-2);background:transparent;
+    border:1px solid var(--line-2);padding:5px 11px;cursor:pointer;transition:.15s;
+  }
+  .dlg-x:hover{border-color:var(--blue);color:var(--blue)}
+  .dlg-b{padding:14px 15px;overflow:auto;-webkit-overflow-scrolling:touch}
+  .dlg-img{display:block;width:100%;height:auto;border:1px solid var(--line);background:var(--bg)}
+  .dlg-ta{
+    display:block;width:100%;height:190px;resize:vertical;padding:9px;
+    font-family:var(--mono);font-size:11px;line-height:1.75;
+    color:var(--ink);background:var(--scr);border:1px solid var(--line);
+  }
+  .dlg-hint{font-size:11.5px;line-height:1.9;color:var(--ink-3);margin-top:10px}
+  .dlg-hint b{color:var(--ink-2);font-weight:600}
+  .dlg-f{display:flex;gap:8px;padding:12px 15px;border-top:1px solid var(--line-2);flex-wrap:wrap}
+  .dlg-f .btn{flex:1 1 120px;text-align:center}
+
+  @media (max-width:820px){
+    .shell{padding:0 14px 48px}
+    .drop{padding:38px 18px 34px}
+    .drop-en{font-size:34px}
+    .ov{grid-template-columns:1fr;gap:18px;align-items:start}
+    .kpi{grid-template-columns:repeat(2,1fr);gap:14px 0;border-left:0}
+    .kpi li{padding-left:0;border-right:0}
+    .kpi li:nth-child(odd){padding-right:12px}
+    .cols{grid-template-columns:1fr;gap:0}
+    footer{flex-direction:column;gap:6px}
+  }
+
+  /* ---------------- 手机 ---------------- */
+  @media (max-width:560px){
+    .shell{padding:0 10px 38px}
+
+    /* 页眉：标题 + 主题按钮同一行，文件信息压到一行 */
+    .top{padding:16px 0 12px;gap:8px;align-items:center;flex-wrap:nowrap}
+    .brand{gap:9px;min-width:0}
+    .mk{width:26px;height:26px}
+    .mk::before{inset:5px}
+    .mk::after{width:6px;height:6px}
+    .eyebrow{font-size:8px;letter-spacing:.08em;margin-bottom:4px}
+    h1{font-size:17px;letter-spacing:.04em;white-space:nowrap}
+    .top-right{flex-direction:row;align-items:center;gap:8px;flex:0 0 auto}
+    .mode-btn{padding:5px 8px;font-size:8.5px;letter-spacing:.08em;gap:6px}
+    .mode-btn .sw{width:6px;height:6px}
+    .meta{display:none}
+
+    /* 按钮 */
+    .toolbar{gap:6px;margin-top:14px}
+    .btn{padding:10px 12px;font-size:10px;letter-spacing:.08em}
+
+    /* 面板与分节 */
+    .sheet{padding:16px 13px 4px;margin-top:12px}
+    .sec{margin-top:22px}
+    .sec-h{gap:9px;margin-bottom:11px}
+    .sec-h .num{font-size:9px;padding:2px 5px}
+    .sec-h .en{font-size:12.5px;letter-spacing:.03em}
+    .sec-h .tail{font-size:10px;letter-spacing:0}
+
+    /* 主数字 */
+    .ov-label{font-size:11px;margin-bottom:7px}
+    .ov-num{gap:8px}
+    .ov-num .big{font-size:62px}
+    .ov-num .unit{font-size:12px}
+    .kpi .k{font-size:10.5px}
+    .kpi .v{font-size:20px;margin-top:5px}
+    .bar-h{font-size:10.5px;letter-spacing:.02em}
+    .bar-h em{margin-left:8px}
+
+    /* 构成：环形居中，图例单独整行 */
+    .bd{grid-template-columns:1fr;gap:16px}
+    .ring{width:140px;height:140px;margin:0 auto}
+    .legend{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:0 14px}
+    .legend li{padding:6px 0;font-size:11.5px;border-bottom:1px solid var(--line)}
+    .legend .vl{font-size:11.5px}
+
+    /* 榜单：优先保住从者名 */
+    .list li{grid-template-columns:20px 3px minmax(0,1fr) auto 38px;gap:7px;padding:9px 0}
+    .list .i{font-size:9.5px}
+    .list .n{font-size:12.5px}
+    .list .b{font-size:9.5px;letter-spacing:0}
+    .list .v{font-size:14px;min-width:0}
+
+    /* 表格：收紧并隐藏可推算列 */
+    .tbl th{font-size:10.5px;padding:0 4px 7px;letter-spacing:0}
+    .tbl td{padding:9px 4px;font-size:11.5px}
+    .tbl td.nm{font-size:12px}
+    .tbl .col-opt{display:none}
+    .tbl tfoot td{padding-top:9px}
+
+    .note{font-size:11.5px;line-height:1.9}
+    .drop-en{font-size:30px}
+    .drop-cn{font-size:13px}
+    .drop-note{font-size:12px}
+    footer{font-size:9px;line-height:1.9}
+
+    /* 手机上不显示带字距的装饰性元素 */
+    .eyebrow{letter-spacing:.06em}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div class="mk"></div>
+      <div>
+        <div class="eyebrow">FGO · 羁绊数据统计</div>
+        <h1>羁绊圣晶石计算器</h1>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="mode-btn" id="btnTheme" type="button"><i class="sw"></i><span id="modeLabel">夜间</span></button>
+      <div class="meta" id="meta"><span class="dot"></span>离线运行<br><b>数据仅在本机计算</b></div>
+    </div>
+  </header>
+
+  <section id="dropzone" class="drop">
+    <span class="idx">01 / 导入</span>
+    <div class="drop-en">导入数据</div>
+    <div class="drop-cn">把 bond-detail CSV 拖进来</div>
+    <p class="drop-note">请先在 chaldea 进行抓包并统计羁绊，生成 bond-detail CSV 文件</p>
+    <div class="drop-hint">点击也可选择文件</div>
+    <i class="cnr a"></i><i class="cnr b"></i><i class="cnr c"></i><i class="cnr d"></i>
+    <input type="file" id="fileInput" accept=".csv,text/csv" hidden>
+  </section>
+
+  <main id="report" hidden></main>
+
+  <footer>
+    <div class="l">
+      <b>规则</b> 6~9 绊按星级（5★ 3 / 4★ 2 / 3★ 1，2★ 仅 8-9 绊、1★ 仅 9 绊、0★ 按 1★）；10 绊以上按已解锁的羁绊上限，每级 30 颗，15 绊封顶。
+    </div>
+    <div>单文件版 · 无网络请求</div>
+  </footer>
+</div>
+
+<script>
+/* ---------- 主题：夜 / 日 ---------- */
+const THEME_KEY = 'fgo-quartz-theme';
+const curTheme = () => document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  const l = document.getElementById('modeLabel');
+  if (l) l.textContent = t === 'light' ? '日间' : '夜间';
+  try { localStorage.setItem(THEME_KEY, t); } catch(e){}
+}
+
+/* =============================================================
+   规则（要改规则就改这里）
+   ============================================================= */
+const REWARD_RULES = {
+  5: {6:3, 7:3, 8:3, 9:3},
+  4: {6:2, 7:2, 8:2, 9:2},
+  3: {6:1, 7:1, 8:1, 9:1},
+  2: {8:1, 9:1},
+  1: {9:1},
+  0: {9:1}
+};
+const DREAMFIRE_QUARTZ = 30;
+const BOND_CAP_MAX     = 15;
+const BOND_CAP_DEFAULT = 10;
+
+/* 星级色只用于极小面积的标记，保持整体单色调 */
+const RARITY_DARK  = {5:'#FFC94A',4:'#B08CFF',3:'#5FC8FF',2:'#6FE3C4',1:'#FF8FA3',0:'#9AA9B8'};
+const RARITY_LIGHT = {5:'#B57900',4:'#6A3EC9',3:'#0B6F9E',2:'#0F7F68',1:'#C23A57',0:'#75818B'};
+const color = r => (curTheme() === 'light' ? RARITY_LIGHT : RARITY_DARK)[r]
+                || (curTheme() === 'light' ? '#75818B' : '#9AA9B8');
+const ruleMax = r => REWARD_RULES[r] ? Object.values(REWARD_RULES[r]).reduce((a,b)=>a+b,0) : 0;
+const fmt = n => Number(n||0).toLocaleString('zh-CN');
+
+/* =============================================================
+   读取：UTF-8 / UTF-16 / GBK 自适应
+   ============================================================= */
+async function readTextSmart(file){
+  const buf = new Uint8Array(await file.arrayBuffer());
+  if (buf[0]===0xEF && buf[1]===0xBB && buf[2]===0xBF)
+    return new TextDecoder('utf-8').decode(buf.subarray(3));
+  if (buf[0]===0xFF && buf[1]===0xFE)
+    return new TextDecoder('utf-16le').decode(buf.subarray(2));
+  if (buf[0]===0xFE && buf[1]===0xFF)
+    return new TextDecoder('utf-16be').decode(buf.subarray(2));
+  try { return new TextDecoder('utf-8', {fatal:true}).decode(buf); }
+  catch(e){
+    try { return new TextDecoder('gbk').decode(buf); }
+    catch(e2){ return new TextDecoder('utf-8').decode(buf); }
+  }
+}
+
+function parseCSV(text){
+  const rows = []; let row = [], cur = '', inQ = false;
+  for (let i=0;i<text.length;i++){
+    const c = text[i];
+    if (inQ){
+      if (c === '"'){ if (text[i+1] === '"'){ cur += '"'; i++; } else inQ = false; }
+      else cur += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ','){ row.push(cur); cur=''; }
+      else if (c === '\r'){ }
+      else if (c === '\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else cur += c;
+    }
+  }
+  if (cur !== '' || row.length){ row.push(cur); rows.push(row); }
+  return rows.filter(r => r.length && !(r.length===1 && r[0].trim()===''));
+}
+
+/* =============================================================
+   计算
+   ============================================================= */
+function analyze(rows, fileName){
+  if (!rows.length) throw new Error('这个文件是空的。');
+  const header = rows[0].map(h => h.trim());
+  const pick = (...cands) => {
+    for (const c of cands){
+      let i = header.indexOf(c);
+      if (i >= 0) return i;
+      i = header.findIndex(h => h.toLowerCase() === c.toLowerCase());
+      if (i >= 0) return i;
+    }
+    return -1;
+  };
+  const iName = pick('Name','ServantName','Servant','从者名','从者名称','从者','名字');
+  const iRar  = pick('Rarity','Rare','星级','稀有度');
+  const iRank = pick('Rank','BondLevel','Bond','羁绊等级','羁绊');
+  const iMax  = pick('RankMax','BondMax','羁绊上限');
+  const iId   = pick('ID','CollectionNo','No','编号','图鉴编号');
+  const iSvt  = pick('svtId','SvtId','从者ID');
+  const iNext = pick('Next','NextExp','下一级经验','距下一级');
+
+  if (iName < 0 || iRar < 0 || iRank < 0)
+    throw new Error('无法识别列名，需要「从者名 / 星级 / 羁绊等级」这三列。');
+
+  const servants = [], warnings = [];
+  for (let li=1; li<rows.length; li++){
+    const r = rows[li];
+    const name = (r[iName] || '').trim();
+    if (!name) continue;
+    const rar = parseInt((r[iRar]||'').trim(), 10);
+    if (!Number.isFinite(rar)){
+      warnings.push(`第 ${li+1} 行：星级不是数字（${r[iRar]}），已跳过 —— ${name}`);
+      continue;
+    }
+    const rank = parseInt((r[iRank]||'').trim(), 10);
+    if (!Number.isFinite(rank)){
+      warnings.push(`第 ${li+1} 行：羁绊等级不是数字（${r[iRank]}），已跳过 —— ${name}`);
+      continue;
+    }
+    let rankMax = 0;
+    if (iMax >= 0) rankMax = parseInt((r[iMax]||'').trim(), 10) || 0;
+    if (rankMax > 0 && rank > rankMax)
+      warnings.push(`第 ${li+1} 行：当前羁绊 ${rank} 大于上限 ${rankMax}，已按 ${rank} 计算 —— ${name}`);
+
+    let earned = 0, remain = 0;
+    const rules = REWARD_RULES[rar];
+    if (rules){
+      for (const lvl of Object.keys(rules).map(Number)){
+        if (lvl <= rank) earned += rules[lvl];
+        else remain += rules[lvl];
+      }
+    } else {
+      warnings.push(`第 ${li+1} 行：${rar}★ 不在奖励规则里，按 0 个计算 —— ${name}`);
+    }
+
+    let cap = rankMax > 0 ? rankMax : BOND_CAP_DEFAULT;
+    cap = Math.min(Math.max(cap, BOND_CAP_DEFAULT), BOND_CAP_MAX);
+    const capStart = rank > BOND_CAP_DEFAULT ? rank : BOND_CAP_DEFAULT;
+    const dreamLevels = Math.max(0, cap - capStart);
+    const dreamfire = dreamLevels * DREAMFIRE_QUARTZ;
+    const dreamLocked = (BOND_CAP_MAX - cap) * DREAMFIRE_QUARTZ;
+    const nextExp = iNext >= 0 ? (parseInt((r[iNext]||'').replace(/[,\s]/g,''), 10) || 0) : 0;
+
+    const svt = iSvt >= 0 ? (r[iSvt]||'').trim() : '';
+    const no  = iId  >= 0 ? (r[iId] ||'').trim() : '';
+
+    servants.push({
+      key: svt || (name + '@' + no),
+      no, name, rarity: rar, rank, rankMax,
+      earned, remain, dreamLevels, dreamfire, dreamLocked, nextExp
+    });
+  }
+
+  if (!servants.length) throw new Error('没有解析出任何从者，检查一下 CSV 内容。');
+
+  const seen = {};
+  servants.forEach(s => { seen[s.key] = (seen[s.key]||0) + 1; });
+  Object.keys(seen).filter(k => seen[k] > 1).forEach(k => {
+    const names = servants.filter(s => s.key === k).map(s => s.name).join(' / ');
+    warnings.push(`svtId ${k} 出现了 ${seen[k]} 次（${names}），若确实有两个同名从者请忽略`);
+  });
+
+  const remain = sum(servants,'remain'), earned = sum(servants,'earned');
+  const dream = sum(servants,'dreamfire');
+  const dreamUsers = servants.filter(s => s.rankMax > BOND_CAP_DEFAULT);
+  const locked = dreamUsers.reduce((a,s) => a + s.dreamLocked, 0);
+  const pool = servants.reduce((a,s) => a + ruleMax(s.rarity), 0);
+  const grand = remain + dream;
+
+  const byRarity = {};
+  servants.forEach(s => {
+    const o = byRarity[s.rarity] || (byRarity[s.rarity] = {rarity:s.rarity, count:0, remain:0, dream:0, full:0});
+    o.count++; o.remain += s.remain; o.dream += s.dreamfire;
+    if (s.remain === 0) o.full++;
+  });
+  const rarityRows = Object.values(byRarity).sort((a,b) => b.rarity - a.rarity);
+  rarityRows.forEach(o => o.value = o.remain + o.dream);
+
+  const remainList = servants.filter(s => s.remain > 0).sort((a,b) =>
+    b.rarity - a.rarity || b.remain - a.remain || a.name.localeCompare(b.name,'zh'));
+  const dreamReady = servants.filter(s => s.dreamLevels > 0).sort((a,b) =>
+    b.dreamfire - a.dreamfire || b.rarity - a.rarity || a.name.localeCompare(b.name,'zh'));
+  const top = servants.filter(s => s.remain + s.dreamfire > 0).sort((a,b) =>
+    (b.remain+b.dreamfire) - (a.remain+a.dreamfire) || b.rarity - a.rarity ||
+    a.name.localeCompare(b.name,'zh')).slice(0,10);
+
+  const mDate = /(\d{4}-\d{2}-\d{2})/.exec(fileName);
+  const mId   = /(\d{9,})/.exec(fileName);
+
+  return {
+    fileName,
+    date: mDate ? mDate[1] : new Date().toISOString().slice(0,10),
+    accountId: mId ? mId[1] : 'unknown',
+    servants, warnings, rarityRows, remainList, dreamReady, top,
+    sums: {remain, earned, dream, locked, pool, grand},
+    dreamUsers,
+    capped10: servants.filter(s => s.rank >= 10 && s.rankMax <= 10).length,
+    dreamfireUsed: dreamUsers.reduce((a,s) => a + Math.max(0, s.rankMax - BOND_CAP_DEFAULT), 0),
+    zeros: servants.filter(s => s.rarity === 0)
+  };
+}
+const sum = (arr, k) => arr.reduce((a,s) => a + s[k], 0);
+
+/* =============================================================
+   渲染
+   ============================================================= */
+let DATA = null, CMP = null;
+const pad2 = n => String(n).padStart(2,'0');
+
+function render(){
+  const S = DATA, g = S.sums;
+  const pct = g.pool > 0 ? Math.round((g.pool - g.remain) / g.pool * 100) : 0;
+  const maxCount = Math.max(1, ...S.rarityRows.map(r => r.count));
+  const donutTotal = Math.max(1, S.rarityRows.reduce((a,r) => a + r.value, 0));
+
+  /* 环形图：细线 + 缺口 */
+  const R = 62, C = 2 * Math.PI * R;
+  let off = 0;
+  const arcs = S.rarityRows.filter(r => r.value > 0).map(r => {
+    const sweep = r.value / donutTotal;
+    const draw = Math.max(sweep - 0.012, 0.003);
+    const seg = `<circle cx="80" cy="80" r="${R}" fill="none" stroke="${color(r.rarity)}" stroke-width="6"
+        stroke-dasharray="${(draw*C).toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-off*C).toFixed(2)}"
+        opacity=".9"/>`;
+    off += sweep;
+    return seg;
+  }).join('');
+
+  const legend = S.rarityRows.map(r => `
+    <li>
+      <span class="sw" style="background:${color(r.rarity)}"></span>
+      <span class="lb">${r.rarity}★</span>
+      <span class="vl">${fmt(r.value)}</span>
+    </li>`).join('');
+
+  const dist = S.rarityRows.map(r => `
+    <li>
+      <span class="s">${r.rarity}★</span>
+      <span class="g"><i style="width:${Math.max(2, r.count / maxCount * 100).toFixed(1)}%;background:${color(r.rarity)};opacity:.85"></i></span>
+      <span class="n">${r.count}</span>
+    </li>`).join('');
+
+  const listRows = S.top.map((s, i) => {
+    const bond = s.dreamfire > 0 ? `${s.rank}/${s.rankMax}` : `${s.rank}`;
+    return `<li>
+      <span class="i">${pad2(i+1)}</span>
+      <span class="tick" style="background:${color(s.rarity)}"></span>
+      <span class="n">${esc(s.name)}</span>
+      <span class="b">羁绊 ${bond}</span>
+      <span class="v">+${s.remain + s.dreamfire}</span>
+    </li>`;
+  }).join('') || `<li style="grid-template-columns:1fr"><span class="b">全部从者的 6~9 绊奖励都已领完。</span></li>`;
+
+  const rarTable = S.rarityRows.map(r => `<tr>
+      <td class="rar" style="color:${color(r.rarity)}">${r.rarity}★</td>
+      <td>${r.count}</td>
+      <td class="dim">${ruleMax(r.rarity) || '-'}</td>
+      <td class="dim col-opt">${r.full}</td>
+      <td>${r.remain}</td>
+      <td>${r.dream}</td>
+      <td style="font-weight:700">${r.value}</td>
+    </tr>`).join('');
+
+  const detail = S.remainList.map(s => `<tr>
+      <td class="rar" style="color:${color(s.rarity)}">${s.rarity}★</td>
+      <td class="dim">${s.rank}${s.rankMax > 10 ? '/' + s.rankMax : ''}</td>
+      <td class="col-opt">${s.remain || '—'}</td>
+      <td class="col-opt">${s.dreamfire || '—'}</td>
+      <td style="font-weight:700;color:var(--yellow)">${s.remain + s.dreamfire}</td>
+      <td class="nm">${esc(s.name)}</td>
+    </tr>`).join('');
+
+  const dreamBlock = S.dreamReady.length ? `
+    <div class="sec">
+      <div class="sec-h"><span class="num">07</span><span class="en">梦火段明细</span><i class="rule"></i><span class="tail">${S.dreamReady.length} 人上限已提升</span></div>
+      <table class="tbl">
+        <thead><tr><th>星级</th><th>羁绊/上限</th><th>可领</th><th>还差经验</th><th style="text-align:left">从者</th></tr></thead>
+        <tbody>${S.dreamReady.map(s => `<tr>
+          <td class="rar" style="color:${color(s.rarity)}">${s.rarity}★</td>
+          <td class="dim">${s.rank}/${s.rankMax}</td>
+          <td style="font-weight:700">${s.dreamfire}</td>
+          <td class="dim">${s.nextExp > 0 ? fmt(s.nextExp) : '—'}</td>
+          <td class="nm">${esc(s.name)}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : '';
+
+  const warnBlock = S.warnings.length ? `
+    <div class="alert">
+      <div class="alert-h">⚠ 数据提醒 / ${S.warnings.length} 条</div>
+      <ul>${S.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul>
+    </div>` : '';
+
+  const notes = [];
+  if (g.earned + g.remain !== g.pool)
+    notes.push(`<span style="color:#FF7A7A">校验异常：总池 ${g.pool} ≠ 已领 ${g.earned} + 剩余 ${g.remain}</span>`);
+  else
+    notes.push(`6~9 绊总量 ${g.pool} ＝ 已领取 ${g.earned} ＋ 仍可获取 ${g.remain}`);
+  if (S.dreamUsers.length)
+    notes.push(`全号已用梦火 ${S.dreamfireUsed} 个（${S.dreamUsers.length} 名从者）；继续把上限提到 15 绊还能再拿 ${g.locked} 个，需再喂梦火，未计入。`);
+  if (S.capped10 > 0) notes.push(`另有 ${S.capped10} 人已顶在 10 绊上限，想再往上必须先喂梦火（未计入）。`);
+  if (S.zeros.length){
+    const zs = S.zeros.reduce((a,s) => a + s.remain, 0);
+    notes.push(`0★（${S.zeros.map(s=>esc(s.name)).join('、')}）默认按 1★ 计入 6~9 段，本次贡献 ${zs} 个；若游戏内 0★ 无此奖励，6~9 段应为 ${g.remain - zs} 个。`);
+  }
+
+  document.getElementById('report').innerHTML = `
+    <div class="toolbar">
+      <button class="btn prime" id="btnPng">导出结果图</button>
+      <button class="btn" id="btnCsv">导出明细表</button>
+      <button class="btn" id="btnAgain">换一份数据</button>
+    </div>
+
+    <div class="sheet">
+    <div class="sec">
+      <div class="sec-h"><span class="num">01</span><span class="en">总览</span><i class="rule"></i><span class="tail"></span></div>
+      <div class="ov">
+        <div class="ov-hero">
+          <div class="ov-label">还能领取</div>
+          <div class="ov-num">
+            <span class="big">${fmt(g.grand)}</span>
+            <span class="unit">颗圣晶石</span>
+          </div>
+        </div>
+        <ul class="kpi">
+          <li><span class="k">6~9 段</span><span class="v">${fmt(g.remain)}</span></li>
+          <li class="hl"><span class="k">梦火段</span><span class="v">${fmt(g.dream)}</span></li>
+          <li><span class="k">已领取</span><span class="v">${fmt(g.earned)}</span></li>
+          <li><span class="k">契约从者</span><span class="v">${S.servants.length}</span></li>
+        </ul>
+      </div>
+      <div class="bar-row">
+        <div class="bar-h"><span>6~9 段进度</span><span><b>${g.pool - g.remain}</b> / ${g.pool}<em>${pct}%</em></span></div>
+        <div class="bar"><i style="width:${pct}%"></i><u></u></div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="sec">
+        <div class="sec-h"><span class="num">02</span><span class="en">圣晶石构成</span><i class="rule"></i><span class="tail">按星级</span></div>
+        <div class="bd">
+          <svg class="ring" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="${R}" fill="none" style="stroke:var(--track)" stroke-width="6"/>
+            <g transform="rotate(-90 80 80)">${arcs}</g>
+            <text x="80" y="72" text-anchor="middle" style="fill:var(--ink)" font-family="Bahnschrift, Arial Narrow, sans-serif" font-size="30" font-weight="700">${g.grand}</text>
+            <text x="80" y="90" text-anchor="middle" style="fill:var(--ink-3)" font-family="Microsoft YaHei UI, PingFang SC, sans-serif" font-size="8.5">颗圣晶石</text>
+          </svg>
+          <ul class="legend">${legend}</ul>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-h"><span class="num">03</span><span class="en">从者分布</span><i class="rule"></i><span class="tail">${S.servants.length} 名</span></div>
+        <ul class="dist">${dist}</ul>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">04</span><span class="en">剩余最多的从者</span><i class="rule"></i><span class="tail">含梦火段 · 前 10 名</span></div>
+      <ul class="list">${listRows}</ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">05</span><span class="en">按星级汇总</span><i class="rule"></i><span class="tail">单位 颗</span></div>
+      <div class="tscroll"><table class="tbl">
+        <thead><tr><th>星级</th><th>人数</th><th>6~9满额</th><th class="col-opt">已满额</th><th>6~9剩余</th><th>梦火段</th><th>合计</th></tr></thead>
+        <tbody>${rarTable}</tbody>
+        <tfoot><tr><td>合计</td><td>${S.servants.length}</td><td></td><td></td><td>${g.remain}</td><td>${g.dream}</td><td>${g.grand}</td></tr></tfoot>
+      </table></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">06</span><span class="en">可领明细</span><i class="rule"></i><span class="tail">${S.remainList.length} 人有剩余</span></div>
+      <div class="scroll">
+        <table class="tbl">
+          <thead><tr><th>星级</th><th>当前绊</th><th class="col-opt">6~9</th><th class="col-opt">梦火</th><th>合计</th><th style="text-align:left">从者</th></tr></thead>
+          <tbody>${detail}</tbody>
+        </table>
+      </div>
+      <details>
+        <summary>与上一次数据对比</summary>
+        <p class="note">选一份旧的 bond-detail 数据，可看出这段时间领了多少、谁升级了。</p>
+        <button class="btn" id="btnCmp" style="margin-top:8px">选择上次的文件</button>
+        <input type="file" id="cmpInput" accept=".csv,text/csv" hidden>
+      </details>
+      <details>
+        <summary>计算说明</summary>
+        <div class="note">${notes.join('<br>')}</div>
+      </details>
+    </div>
+
+    ${cmpCard()}
+    ${dreamBlock}
+    ${warnBlock}
+    </div>
+  `;
+
+  document.getElementById('report').hidden = false;
+  document.getElementById('dropzone').classList.add('hidden');
+  document.getElementById('meta').innerHTML =
+    `<span class="dot"></span>离线运行<br><b>${esc(S.fileName)}</b><br>${S.date} · ID ${S.accountId}`;
+
+  bind('btnPng', () => downloadPng());
+  bind('btnCsv', () => downloadCsv());
+  bind('btnAgain', () => {
+    document.getElementById('report').hidden = true;
+    document.getElementById('dropzone').classList.remove('hidden');
+    document.getElementById('fileInput').click();
+  });
+  bind('btnCmp', () => document.getElementById('cmpInput').click());
+  const ci = document.getElementById('cmpInput');
+  if (ci) ci.onchange = async e => { await loadCompare(e.target.files[0]); };
+}
+
+const bind = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hexA = (hex, a) => {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;
+};
+
+/* =============================================================
+   对比
+   ============================================================= */
+async function loadCompare(file){
+  if (!file) return;
+  try {
+    const text = await readTextSmart(file);
+    CMP = analyze(parseCSV(text), file.name);
+    if (DATA) render();
+  } catch (e){
+    alert('这份对比文件读不了：' + e.message);
+  }
+}
+
+function cmpCard(){
+  if (!CMP || !DATA) return '';
+  const a = CMP.sums, b = DATA.sums;
+  const delta = b.grand - a.grand;
+  const sign = delta > 0 ? '+' : delta < 0 ? '−' : '±';
+  const am = {}; CMP.servants.forEach(s => am[s.key] = s);
+  const changes = [];
+  DATA.servants.forEach(s => {
+    const o = am[s.key];
+    if (!o) changes.push(`新增从者：${s.name}（${s.rarity}★，${s.rank} 绊，可领 ${s.remain + s.dreamfire}）`);
+    else if (s.rank > o.rank)
+      changes.push(`${s.name}：${s.rarity}★ ${o.rank} 绊 → ${s.rank} 绊，可领取 ${o.remain} → ${s.remain}`);
+  });
+  return `
+    <div class="sec">
+      <div class="sec-h"><span class="num">08</span><span class="en">数据对比</span><i class="rule"></i><span class="tail">${esc(CMP.fileName)}</span></div>
+      <div class="cmp-delta">可拿总数 ${a.grand} → ${b.grand}（${sign}${Math.abs(delta)}）</div>
+      <div class="note">
+        其中 6~9 段 ${a.remain} → ${b.remain}，梦火段 ${a.dream} → ${b.dream}<br>
+        ${delta < 0 ? `期间已领到：${-delta} 个` : delta > 0 ? `剩余变多了 ${delta} 个（多半是新获得从者，或旧数据里少了人）` : '这段时间没有变化'}
+      </div>
+      ${changes.length ? `<div class="note">变化明细（${changes.length} 条）：<br>${changes.map(esc).join('<br>')}</div>`
+                       : `<div class="note">没有从者升级，也没有新增从者。</div>`}
+    </div>`;
+}
+
+/* =============================================================
+   导出 CSV
+   ============================================================= */
+/* ---------- 导出：桌面直接下载，手机走弹层 ---------- */
+function downloadPng(){
+  const cv = buildPng(DATA);
+  const url = cv.toDataURL('image/png');   /* 同步生成，保住用户手势 */
+  const name = `羁绊圣晶石-${DATA.accountId}-${DATA.date}.png`;
+  if (needDialog()) showImageDialog(url, name);
+  else triggerDownload(url, name);
+}
+
+function buildCsvText(){
+  const rows = [['图鉴No','从者','星级','当前羁绊','羁绊上限','6~9剩余','梦火段可领','合计可领','已领取','距下一级经验']];
+  DATA.servants.slice().sort((a,b) => b.rarity - a.rarity || b.remain - a.remain || a.name.localeCompare(b.name,'zh'))
+    .forEach(s => rows.push([s.no, s.name, s.rarity, s.rank, s.rankMax, s.remain, s.dreamfire, s.remain + s.dreamfire, s.earned, s.nextExp]));
+  return rows.map(r => r.map(v => {
+    const t = String(v ?? '');
+    return /[",\n]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t;
+  }).join(',')).join('\r\n');
+}
+
+function downloadCsv(){
+  const csv = '\ufeff' + buildCsvText();
+  const name = `羁绊圣晶石明细-${DATA.accountId}-${DATA.date}.csv`;
+  if (needDialog()) showTextDialog(csv, name);
+  else triggerDownload('data:text/csv;charset=utf-8,' + encodeURIComponent(csv), name);
+}
+
+function triggerDownload(url, name){
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* 触屏设备一律弹层：手机/内置浏览器的下载限制太多 */
+const isTouch = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+                 || (navigator.maxTouchPoints > 1 && window.innerWidth < 900);
+const isInApp = () => /MicroMessenger|QQ\/|Weibo|AlipayClient|aweme/i.test(navigator.userAgent);
+const needDialog = () => isTouch();
+
+function dlgEl(){
+  let d = document.getElementById('dlg');
+  if (d) return d;
+  d = document.createElement('div');
+  d.id = 'dlg'; d.className = 'dlg'; d.hidden = true;
+  d.innerHTML = '<div class="dlg-box">'
+    + '<div class="dlg-h"><span class="dlg-t" id="dlgTitle">导出</span>'
+    + '<button class="dlg-x" id="dlgX" type="button">关闭</button></div>'
+    + '<div class="dlg-b" id="dlgBody"></div>'
+    + '<div class="dlg-f" id="dlgFoot"></div></div>';
+  document.body.appendChild(d);
+  d.addEventListener('click', e => { if (e.target === d) hideDlg(); });
+  d.querySelector('#dlgX').onclick = hideDlg;
+  return d;
+}
+
+function hideDlg(){
+  const d = document.getElementById('dlg');
+  if (d) d.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function openDlg(title, bodyHtml, footHtml){
+  const d = dlgEl();
+  d.querySelector('#dlgTitle').textContent = title;
+  d.querySelector('#dlgBody').innerHTML = bodyHtml;
+  d.querySelector('#dlgFoot').innerHTML = footHtml;
+  d.hidden = false;
+  document.body.style.overflow = 'hidden';
+  return d;
+}
+
+function showImageDialog(url, name){
+  const tip = isInApp()
+    ? '当前是微信 / QQ 内置浏览器，<b>长按图片 → 保存图片</b>就能存进相册；或点右上角「…」→ 用浏览器打开再下载。'
+    : '长按图片 → <b>保存到相册</b>；也可以点下面的按钮下载。';
+  const d = openDlg('结果图已生成',
+    '<img class="dlg-img" src="' + url + '" alt="结果图">'
+    + '<div class="dlg-hint">' + tip + '</div>',
+    '<button class="btn prime" id="dlgSave" type="button">下载图片</button>');
+  d.querySelector('#dlgSave').onclick = () => triggerDownload(url, name);
+}
+
+function showTextDialog(text, name){
+  const tip = isInApp()
+    ? '内置浏览器无法直接下载文件。点「复制内容」粘贴到备忘录或表格即可；或点右上角「…」→ 用浏览器打开。'
+    : '点「复制内容」可以直接粘贴到表格里，也可以下载成 CSV 文件。';
+  const d = openDlg('明细表已生成',
+    '<textarea class="dlg-ta" id="dlgTa" readonly>' + esc(text.replace(/^\uFEFF/, '')) + '</textarea>'
+    + '<div class="dlg-hint">' + tip + '</div>',
+    '<button class="btn prime" id="dlgCopy" type="button">复制内容</button>'
+    + '<button class="btn" id="dlgSave" type="button">下载文件</button>');
+  const ta = d.querySelector('#dlgTa');
+  d.querySelector('#dlgCopy').onclick = async function(){
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch(e){}
+    if (!ok){ ta.focus(); ta.select(); try { ok = document.execCommand('copy'); } catch(e){} }
+    this.textContent = ok ? '已复制' : '请长按文本框全选';
+    setTimeout(() => { this.textContent = '复制内容'; }, 1800);
+  };
+  d.querySelector('#dlgSave').onclick = () =>
+    triggerDownload('data:text/csv;charset=utf-8,' + encodeURIComponent(text), name);
+}
+
+/* =============================================================
+   结果图：规格书版式 + 单色蓝调影像
+   ============================================================= */
+const F_COND = 'Bahnschrift, "Arial Narrow", Impact, sans-serif';
+const F_MONO = '"Cascadia Mono", Consolas, monospace';
+const F_SANS = '"Microsoft YaHei UI", "PingFang SC", sans-serif';
+
+function buildPng(S){
+  const g0 = S.sums;
+  const LIGHT = curTheme() === 'light';
+  const W = 540, M = 22, scale = 2;   /* 540×2 = 1080 宽，手机竖屏 */
+  const HMAX = 1400;
+
+  const cv = document.createElement('canvas');
+  cv.width = W * scale; cv.height = HMAX * scale;
+  const g = cv.getContext('2d');
+  g.scale(scale, scale);
+  g.textBaseline = 'top';
+
+  /* ---------- 底 ---------- */
+  g.fillStyle = LIGHT ? '#F4F5F7' : '#07090C';
+  g.fillRect(0, 0, W, HMAX);
+
+  const glow = g.createRadialGradient(W/2, -60, 0, W/2, -60, 460);
+  glow.addColorStop(0, LIGHT ? 'rgba(27,47,201,.07)' : 'rgba(61,82,255,.20)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = glow; g.fillRect(0, 0, W, HMAX);
+
+  g.lineWidth = 1;
+  g.strokeStyle = LIGHT ? 'rgba(27,47,201,.07)' : 'rgba(122,146,186,.06)';
+  g.beginPath();
+  for (let x = 0; x <= W; x += 45){ g.moveTo(x + .5, 0); g.lineTo(x + .5, HMAX); }
+  for (let y = 0; y <= HMAX; y += 45){ g.moveTo(0, y + .5); g.lineTo(W, y + .5); }
+  g.stroke();
+
+  /* ---------- 工具 ---------- */
+  const tx = (t,size,weight,c,x,y,align='left',family=F_SANS) => {
+    g.font = `${weight} ${size}px ${family}`;
+    g.textAlign = align; g.fillStyle = c; g.fillText(t, x, y);
+  };
+  const meas = (t,size,weight,family=F_SANS) => { g.font = `${weight} ${size}px ${family}`; return g.measureText(t).width; };
+  const line = (x1,y1,x2,y2,c) => { g.beginPath(); g.strokeStyle = c; g.lineWidth = 1; g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); };
+  const rect = (x,y,w,h,stroke,fill) => {
+    if (fill){ g.fillStyle = fill; g.fillRect(x,y,w,h); }
+    if (stroke){ g.strokeStyle = stroke; g.lineWidth = 1; g.strokeRect(x+.5,y+.5,w-1,h-1); }
+  };
+
+  const INK  = LIGHT ? '#0C1118' : '#EDF1F4';
+  const INK2 = LIGHT ? '#49545F' : '#98A2AB';
+  const INK3 = LIGHT ? '#7B858E' : '#5C656E';
+  const BLUE = LIGHT ? '#1B2FC9' : '#3D52FF';
+  const BLUE_LT = LIGHT ? '#3A4DE0' : '#7B8BFF';
+  const YEL  = LIGHT ? '#1B2FC9' : '#EDE81E';
+  const LN   = LIGHT ? '#E2E6EB' : '#23282F';
+  const LN2  = LIGHT ? '#BFC7D0' : '#39414B';
+  const TRACK = LIGHT ? '#E9ECF0' : '#12161B';
+  const GAPC  = LIGHT ? '#F4F5F7' : '#07090C';
+
+  const secH = (y, num, title, tail) => {
+    rect(M, y, 22, 14, BLUE, null);
+    tx(num, 8.5, 'normal', BLUE_LT, M + 11, y + 2.5, 'center', F_MONO);
+    tx(title, 11.5, '700', INK, M + 30, y + 1, 'left', F_SANS);
+    const lx = M + 30 + meas(title, 11.5, '700', F_SANS) + 9;
+    const rx = W - M - (tail ? meas(tail, 9, 'normal', F_SANS) + 12 : 0);
+    if (rx > lx + 8) line(lx, y + 7, rx, y + 7, LN2);
+    if (tail) tx(tail, 9, 'normal', INK3, W - M, y + 2, 'right', F_SANS);
+  };
+
+  let y = 26;
+
+  /* ---------- 页眉 ---------- */
+  tx('羁绊圣晶石计算器', 18, '700', INK, M, y, 'left', F_SANS);
+  tx(`${S.date}  ·  ${S.accountId}`, 9, 'normal', INK3, W - M, y + 5, 'right', F_MONO);
+  y += 30;
+  line(M, y, W - M, y, LN2);
+  y += 20;
+
+  /* ---------- 主数字 ---------- */
+  tx('还能领取', 9.5, 'normal', BLUE_LT, M, y, 'left', F_SANS);
+  y += 16;
+  const bt = String(g0.grand);
+  tx(bt, 92, '700', LIGHT ? BLUE : INK, M - 2, y, 'left', F_COND);
+  const bw = meas(bt, 92, '700', F_COND);
+  tx('颗圣晶石', 13, 'normal', INK2, M + bw + 8, y + 60, 'left', F_SANS);
+  y += 82;
+  line(M, y, W - M, y, LN);
+  y += 14;
+
+  /* ---------- 四个指标 2×2 ---------- */
+  const cw = (W - M * 2) / 2;
+  const items = [
+    ['6~9 段', g0.remain, INK],
+    ['梦火段', g0.dream, YEL],
+    ['已领取', g0.earned, INK],
+    ['契约从者', String(S.servants.length), INK]
+  ];
+  items.forEach(([k,v,c], i) => {
+    const col = i % 2, row = Math.floor(i / 2);
+    const x = M + col * cw + (col ? 16 : 0);
+    if (col) line(M + cw + 2, y + row * 50 - 4, M + cw + 2, y + row * 50 + 38, LN);
+    tx(k, 10, 'normal', INK2, x, y + row * 50, 'left', F_SANS);
+    tx(String(v), 25, '700', c, x, y + row * 50 + 14, 'left', F_COND);
+  });
+  y += 96;
+  line(M, y, W - M, y, LN);
+  y += 16;
+
+  /* ---------- 进度 ---------- */
+  tx('6~9 段进度', 10, 'normal', INK2, M, y, 'left', F_SANS);
+  const pct = g0.pool > 0 ? Math.round((g0.pool - g0.remain) / g0.pool * 100) : 0;
+  const pctTxt = `${pct}%`;
+  tx(pctTxt, 11, '700', BLUE_LT, W - M, y - 1, 'right', F_MONO);
+  tx(`${g0.pool - g0.remain} / ${g0.pool}`, 10, 'normal', INK2, W - M - meas(pctTxt, 11, '700', F_MONO) - 12, y, 'right', F_MONO);
+  const barY = y + 20, barW = W - M * 2;
+  rect(M, barY, barW, 8, LN, TRACK);
+  if (pct > 0) rect(M + 1, barY + 1, Math.max(4, (barW - 2) * pct / 100), 6, null, BLUE);
+  for (let i = 1; i < 10; i++) line(M + barW * i / 10, barY + 1, M + barW * i / 10, barY + 7, GAPC);
+  y = barY + 30;
+
+  /* ---------- 圣晶石构成 ---------- */
+  secH(y, '02', '圣晶石构成', '按星级');
+  y += 24;
+  const cx = M + 56, cy = y + 46, rad = 40;
+  g.beginPath(); g.strokeStyle = TRACK; g.lineWidth = 7; g.arc(cx, cy, rad, 0, 7); g.stroke();
+  let st = -90;
+  const dtt = Math.max(1, S.rarityRows.reduce((a,r) => a + r.value, 0));
+  S.rarityRows.forEach(r => {
+    const sw = 360 * r.value / dtt;
+    if (sw <= 0) return;
+    g.beginPath(); g.strokeStyle = color(r.rarity); g.lineWidth = 7; g.lineCap = 'butt';
+    g.arc(cx, cy, rad, st*Math.PI/180, (st + Math.max(0.8, sw - 4))*Math.PI/180); g.stroke();
+    st += sw;
+  });
+  tx(String(g0.grand), 20, '700', INK, cx, cy - 13, 'center', F_COND);
+  tx('颗圣晶石', 7.5, 'normal', INK3, cx, cy + 10, 'center', F_SANS);
+
+  /* 图例：三列，数字紧贴标签 */
+  const lgX = M + 112;
+  const cols = 3;
+  const colW = (W - M - lgX) / cols;
+  S.rarityRows.forEach((r, i) => {
+    const col = i % cols, row = Math.floor(i / cols);
+    const lx = lgX + col * colW;
+    const ly = y + 22 + row * 24;
+    g.fillStyle = color(r.rarity); g.fillRect(lx, ly + 4, 7, 7);
+    tx(`${r.rarity}★`, 10.5, 'normal', INK2, lx + 12, ly + 1, 'left', F_SANS);
+    tx(fmt(r.value), 11, '700', INK, lx + 104, ly, 'right', F_MONO);
+  });
+  y += 96;
+
+  /* ---------- 从者分布 ---------- */
+  secH(y, '03', '从者分布', `${S.servants.length} 名`);
+  y += 26;
+  const maxCount = Math.max(1, ...S.rarityRows.map(r => r.count));
+  S.rarityRows.forEach((r, i) => {
+    const ry = y + i * 23;
+    tx(`${r.rarity}★`, 10.5, 'normal', INK2, M, ry + 1, 'left', F_SANS);
+    const gx = M + 34, gw = W - M * 2 - 34 - 40;
+    rect(gx, ry + 3, gw, 7, LN, TRACK);
+    g.fillStyle = color(r.rarity); g.globalAlpha = .9;
+    g.fillRect(gx + 1, ry + 4, Math.max(3, (gw - 2) * r.count / maxCount), 5);
+    g.globalAlpha = 1;
+    tx(String(r.count), 10, 'normal', INK3, W - M, ry + 1, 'right', F_MONO);
+  });
+  y += S.rarityRows.length * 23 + 12;
+
+  /* ---------- 剩余最多 ---------- */
+  secH(y, '04', '剩余最多的从者', '含梦火段');
+  y += 24;
+  line(M, y, W - M, y, LN2);
+  y += 8;
+  if (!S.top.length) tx('全部从者的 6~9 绊奖励都已领完。', 11, 'normal', INK3, M, y + 4);
+  S.top.forEach((s, i) => {
+    const ry = y + i * 30;
+    tx(pad2(i + 1), 9, 'normal', INK3, M, ry + 4, 'left', F_MONO);
+    g.fillStyle = color(s.rarity); g.fillRect(M + 20, ry + 2, 3, 13);
+    tx(s.name, 11.5, 'normal', INK, M + 30, ry + 1, 'left', F_SANS);
+    const bond = s.dreamfire > 0 ? `${s.rank}/${s.rankMax}` : `${s.rank}`;
+    tx(`羁绊 ${bond}`, 9.5, 'normal', INK3, W - M - 40, ry + 4, 'right', F_SANS);
+    tx(`+${s.remain + s.dreamfire}`, 13, '700', INK, W - M, ry, 'right', F_COND);
+    if (i < S.top.length - 1) line(M, ry + 24, W - M, ry + 24, LN);
+  });
+  y += Math.max(1, S.top.length) * 30 + 10;
+
+  /* ---------- 画幅与页脚 ---------- */
+  const finalH = Math.max(960, Math.ceil(y + 42));
+  const fy = finalH - 40;
+  line(M, fy - 12, W - M, fy - 12, LN2);
+  tx(`数据来源  ${S.fileName}`, 8.5, 'normal', INK3, M, fy, 'left', F_MONO);
+  const now = new Date();
+  tx(`生成于  ${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+     8.5, 'normal', INK3, W - M, fy, 'right', F_MONO);
+  tx('规则  6~9 绊按星级（5★3 / 4★2 / 3★1，2★8-9、1★9、0★按1★）· 10 绊以上每级 30 · 15 绊封顶',
+     8, 'normal', LIGHT ? '#8B949D' : '#5A636D', M, fy + 15, 'left', F_SANS);
+
+  /* ---------- 裁剪到实际高度 ---------- */
+  const out = document.createElement('canvas');
+  out.width = W * scale; out.height = finalH * scale;
+  out.getContext('2d').drawImage(cv, 0, 0, W * scale, finalH * scale, 0, 0, W * scale, finalH * scale);
+  return out;
+}
+
+/* =============================================================
+   启动
+   ============================================================= */
+let savedTheme = document.documentElement.getAttribute('data-theme');
+if (savedTheme !== 'light' && savedTheme !== 'dark'){
+  try { savedTheme = localStorage.getItem(THEME_KEY) || 'dark'; } catch(e){ savedTheme = 'dark'; }
+}
+applyTheme(savedTheme);
+document.getElementById('btnTheme').addEventListener('click', () => {
+  applyTheme(curTheme() === 'light' ? 'dark' : 'light');
+  if (DATA) render();
+});
+
+const dz = document.getElementById('dropzone');
+const fi = document.getElementById('fileInput');
+
+dz.addEventListener('click', () => fi.click());
+fi.addEventListener('change', async e => {
+  if (e.target.files.length) await loadFiles([...e.target.files]);
+  fi.value = '';
+});
+
+['dragenter','dragover'].forEach(t => dz.addEventListener(t, e => {
+  e.preventDefault(); dz.classList.add('over');
+}));
+['dragleave','drop'].forEach(t => dz.addEventListener(t, e => {
+  e.preventDefault(); dz.classList.remove('over');
+}));
+dz.addEventListener('drop', async e => {
+  const files = [...e.dataTransfer.files].filter(f => /\.csv$/i.test(f.name) || (f.type||'').includes('csv'));
+  if (files.length) await loadFiles(files);
+});
+
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => e.preventDefault());
+
+async function loadFiles(files){
+  try {
+    const text = await readTextSmart(files[0]);
+    DATA = analyze(parseCSV(text), files[0].name);
+    CMP = null;
+    render();
+    if (files[1]) await loadCompare(files[1]);
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  } catch (err){
+    showError(err, files[0]);
+  }
+}
+
+function showError(err, file){
+  document.getElementById('report').innerHTML = `
+    <div class="alert err">
+      <div class="alert-h">✕ 读取失败</div>
+      <div style="font-size:13px;color:#FFD7D7">${esc(err.message)}</div>
+      <code>FILE: ${esc(file ? file.name : '(未选择)')}</code>
+      <div class="note" style="color:#FFBDBD">需要游戏导出的 bond-detail CSV，表头至少包含 Name / Rarity / Rank 三列。</div>
+    </div>
+    <div class="toolbar"><button class="btn" id="btnRetry">重新选择文件</button></div>`;
+  document.getElementById('report').hidden = false;
+  bind('btnRetry', () => fi.click());
+}
+</script>
+</body>
+</html>
