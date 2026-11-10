@@ -25,6 +25,13 @@
     --blue:#3D52FF;
     --blue-lt:#7B8BFF;
     --blue-dim:rgba(61,82,255,.14);
+    /* 数据强调色：默认与主色一致，可单独替换 */
+    --acc:var(--blue);
+    --acc-lt:var(--blue-lt);
+    --acc-ink:#FFFFFF;
+    --acc-dim:var(--blue-dim);
+    /* 6~9 段的不透明度（浅色段），深色主题压得更低才分得出深浅 */
+    --seg:.45; --seg-top:.80;
     --num:#EDF1F4;
     --hl:#EDE81E;
     --warn:#EDE81E;
@@ -58,6 +65,13 @@
     --blue:#1B2FC9;
     --blue-lt:#3A4DE0;
     --blue-dim:rgba(27,47,201,.07);
+    /* 日间不换色，沿用宝蓝 */
+    --acc:var(--blue);
+    --acc-lt:var(--blue-lt);
+    --acc-ink:#FFFFFF;
+    --acc-dim:var(--blue-dim);
+    /* 白底上浅色段要够实才不像没填，但和实色也得拉开差距 */
+    --seg:.55; --seg-top:.80;
     --num:#1B2FC9;
     --hl:#1B2FC9;
     --warn:#B07D00;
@@ -124,6 +138,40 @@
   .mode-btn:hover{border-color:var(--blue);color:var(--blue)}
   .mode-btn .sw{width:8px;height:8px;background:var(--blue);display:block;flex:0 0 auto}
 
+  /* ---------- 配色选择 ---------- */
+  .pal-wrap{position:relative;display:inline-flex}
+  .pal-pop{
+    position:absolute;right:0;top:calc(100% + 9px);z-index:60;width:214px;
+    background:var(--surface);border:1px solid var(--line-2);padding:13px 13px 11px;
+    box-shadow:0 18px 44px rgba(0,0,0,.45);
+  }
+  .pal-pop[hidden]{display:none}
+  .pal-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--ink-3);margin-bottom:10px}
+  .pal-list{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .pal-sw{
+    width:100%;aspect-ratio:1;border:1px solid var(--line-2);background:transparent;
+    cursor:pointer;padding:3px;transition:.15s;position:relative;
+  }
+  .pal-sw i{display:block;width:100%;height:100%}
+  .pal-sw:hover{border-color:var(--ink-2)}
+  .pal-sw.on{border-color:var(--ink)}
+  .pal-sw.on::after{
+    content:"";position:absolute;right:-3px;top:-3px;width:7px;height:7px;
+    background:var(--ink);border:2px solid var(--surface);
+  }
+  .pal-cus{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+    font-family:var(--sans);font-size:11.5px;color:var(--ink-2);
+  }
+  .pal-cus input{width:52px;height:22px;padding:0;border:1px solid var(--line-2);background:transparent;cursor:pointer}
+  .pal-reset{
+    display:block;width:100%;margin-top:9px;padding:6px;cursor:pointer;
+    font-family:var(--sans);font-size:11.5px;color:var(--ink-2);
+    background:transparent;border:1px solid var(--line);transition:.15s;
+  }
+  .pal-reset:hover{border-color:var(--blue);color:var(--blue)}
+
   /* ---------- 导入 ---------- */
   .drop{
     flex:0 0 auto;margin-top:auto;margin-bottom:auto;
@@ -163,8 +211,8 @@
     padding:12px 18px;cursor:pointer;transition:.15s;
   }
   .btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
-  .btn.prime{background:var(--blue);border-color:var(--blue);color:#fff}
-  .btn.prime:hover{background:var(--blue-lt);border-color:var(--blue-lt);color:#fff}
+  .btn.prime{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+  .btn.prime:hover{background:var(--acc-lt);border-color:var(--acc-lt);color:var(--acc-ink)}
 
   /* ---------- 图纸面板 ---------- */
   .sheet{
@@ -219,7 +267,7 @@
   .bar-h b{color:var(--ink);font-weight:700}
   .bar-h em{color:var(--blue-lt);font-style:normal;margin-left:12px}
   .bar{position:relative;height:9px;background:var(--track);border:1px solid var(--line);overflow:hidden}
-  .bar > i{position:absolute;left:0;top:0;bottom:0;background:var(--blue)}
+  .bar > i{position:absolute;left:0;top:0;bottom:0;background:var(--acc)}
   .bar > u{
     position:absolute;inset:0;pointer-events:none;
     background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),var(--bg) calc(10% - 1px),var(--bg) 10%);
@@ -232,6 +280,7 @@
   .bd{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
   .ring{width:168px;height:168px;flex:0 0 auto}
   .legend{list-style:none;margin:0;padding:0}
+  .legend li:last-child{border-bottom:0}
   .legend li{
     display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--line);
     font-family:var(--sans);font-size:12.5px;letter-spacing:.02em;
@@ -247,6 +296,12 @@
   .dist .g{position:relative;height:7px;background:var(--track);border:1px solid var(--line)}
   .dist .g > i{display:block;height:100%}
   .dist .n{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);text-align:right;letter-spacing:.02em}
+  .dist .g{display:flex}
+  .dist .g > i,.dist .g > b{display:block;height:100%}
+  .dist.cls li{grid-template-columns:38px 1fr 46px 58px}
+  .dist.cls .n.is-max{color:var(--acc);font-weight:700}
+  .dist.cls .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);text-align:right;letter-spacing:.02em}
+  .dist.cls .m em{font-style:normal}
 
   /* ---------- 榜单 ---------- */
   .list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line-2)}
@@ -385,6 +440,9 @@
     .sec-h .num{font-size:9px;padding:2px 5px}
     .sec-h .en{font-size:12.5px;letter-spacing:.03em}
     .sec-h .tail{font-size:10px;letter-spacing:0}
+    .dist.cls li{grid-template-columns:32px 1fr 34px 46px;gap:8px}
+    .dist.cls .m{font-size:9.5px;white-space:nowrap}
+    .dist.cls .m .pl{display:none}
 
     /* 主数字 */
     .ov-label{font-size:11px;margin-bottom:7px}
@@ -439,6 +497,15 @@
       </div>
     </div>
     <div class="top-right">
+      <div class="pal-wrap">
+        <button class="mode-btn" id="btnPal" type="button" aria-expanded="false"><i class="sw" id="palSw"></i><span>配色</span></button>
+        <div class="pal-pop" id="palPop" hidden>
+          <div class="pal-h">主题色</div>
+          <div class="pal-list" id="palList"></div>
+          <label class="pal-cus">自定义<input type="color" id="palInput" value="#3D52FF"></label>
+          <button class="pal-reset" id="palReset" type="button">恢复默认</button>
+        </div>
+      </div>
       <button class="mode-btn" id="btnTheme" type="button"><i class="sw"></i><span id="modeLabel">夜间</span></button>
       <div class="meta" id="meta"><span class="dot"></span>离线运行<br><b>数据仅在本机计算</b></div>
     </div>
@@ -468,6 +535,108 @@
 /* ---------- 主题：夜 / 日 ---------- */
 const THEME_KEY = 'fgo-quartz-theme';
 const curTheme = () => document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+/* ---------- 主题色 ---------- */
+const ACC_KEY = 'fgo-quartz-accent';
+const ACC_PRESETS = [
+  ['宝蓝', '#3D52FF'], ['青碧', '#22D3C5'], ['薄荷', '#35DE8C'], ['琥珀', '#F0A32B'],
+  ['珊瑚', '#FF6B4A'], ['品红', '#E2547A'], ['紫罗兰', '#9B7BFF'], ['灰蓝', '#7E8FA6']
+];
+
+function hexToHsl(hex){
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn;
+  let hue = 0;
+  if (d){
+    if (mx === r) hue = ((g - b) / d + (g < b ? 6 : 0));
+    else if (mx === g) hue = (b - r) / d + 2;
+    else hue = (r - g) / d + 4;
+    hue *= 60;
+  }
+  const l = (mx + mn) / 2;
+  const s = d ? d / (1 - Math.abs(2 * l - 1)) : 0;
+  return { h: hue, s: s * 100 };
+}
+function hslToHex(hue, s, l){
+  const S = s / 100, L = l / 100;
+  const k = n => (n + hue / 30) % 12;
+  const a = S * Math.min(L, 1 - L);
+  const f = n => L - a * Math.max(-1, Math.min(Math.min(k(n) - 3, 9 - k(n)), 1));
+  const to = x => Math.round(x * 255).toString(16).padStart(2, '0');
+  return '#' + to(f(0)) + to(f(8)) + to(f(4));
+}
+
+function accentCss(hex){
+  const { h: hue, s } = hexToHsl(hex);
+  const sat = Math.max(42, Math.min(100, s));
+  const rgb = hex.replace('#','').match(/../g).map(x => parseInt(x, 16)).join(',');
+  /* 填充色变亮时文字必须转深色，否则白字会糊 */
+  const lum = hhh => {
+    const c = [0,1,2].map(i => {
+      const v = parseInt(hhh.substr(1 + i*2, 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2];
+  };
+  const inkFor = c => lum(c) > 0.34 ? '#080A0E' : '#FFFFFF';
+  const dBase = hslToHex(hue, sat, 58), lBase = hslToHex(hue, sat, 38);
+  return ':root{'
+    + '--blue:' + dBase + ';'
+    + '--blue-lt:' + hslToHex(hue, sat, 72) + ';'
+    + '--blue-dim:rgba(' + rgb + ',.14);'
+    + '--acc-ink:' + inkFor(dBase) + '}'
+    + ':root[data-theme="light"]{'
+    + '--blue:' + lBase + ';'
+    + '--blue-lt:' + hslToHex(hue, sat, 48) + ';'
+    + '--blue-dim:rgba(' + rgb + ',.08);'
+    + '--num:' + lBase + ';'
+    + '--hl:' + lBase + ';'
+    + '--acc-ink:' + inkFor(lBase) + '}';
+}
+
+function applyAccent(hex, save){
+  let st = document.getElementById('accStyle');
+  if (!st){ st = document.createElement('style'); st.id = 'accStyle'; document.head.appendChild(st); }
+  st.textContent = hex ? accentCss(hex) : '';
+  const sw = document.getElementById('palSw');
+  if (sw) sw.style.background = hex || 'var(--blue)';
+  const inp = document.getElementById('palInput');
+  if (inp && hex) inp.value = hex;
+  document.querySelectorAll('#palList .pal-sw').forEach(b => {
+    b.classList.toggle('on', !!hex && b.dataset.hex.toLowerCase() === hex.toLowerCase());
+  });
+  if (save !== false){ try { localStorage.setItem(ACC_KEY, hex || ''); } catch(e){} }
+}
+
+function initAccent(){
+  const list = document.getElementById('palList');
+  if (list){
+    list.innerHTML = ACC_PRESETS.map(([n, hex]) =>
+      '<button class="pal-sw" type="button" title="' + n + '" data-hex="' + hex + '">'
+      + '<i style="background:' + hex + '"></i></button>').join('');
+    list.addEventListener('click', e => {
+      const b = e.target.closest('.pal-sw');
+      if (b) applyAccent(b.dataset.hex);
+    });
+  }
+  const inp = document.getElementById('palInput');
+  if (inp) inp.addEventListener('input', () => applyAccent(inp.value));
+  const reset = document.getElementById('palReset');
+  if (reset) reset.addEventListener('click', () => applyAccent(''));
+
+  let saved = '';
+  try { saved = localStorage.getItem(ACC_KEY) || ''; } catch(e){}
+  applyAccent(saved, false);
+}
+
+function togglePal(force){
+  const pop = document.getElementById('palPop'), btn = document.getElementById('btnPal');
+  if (!pop) return;
+  const open = force !== undefined ? force : pop.hidden;
+  pop.hidden = !open;
+  if (btn) btn.setAttribute('aria-expanded', String(open));
+}
+
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t);
   const l = document.getElementById('modeLabel');
@@ -486,6 +655,26 @@ const REWARD_RULES = {
   1: {9:1},
   0: {6:2, 7:2, 8:2, 9:2}   /* 安格拉·曼纽：6~9 绊每级 2 颗 */
 };
+/* 职阶：svtId ÷ 100000 = 职阶码。现行编号不是旧资料里的 1–15，已按实测校正 */
+const CLASS_NAME = {
+  1:'剑士', 2:'弓兵', 3:'枪兵', 4:'骑兵', 5:'术师', 6:'暗杀', 7:'狂战', 8:'盾兵',
+  9:'裁定', 10:'他我', 11:'复仇', 23:'月癌', 25:'降临', 28:'伪装', 33:'兽'
+};
+/* 显示顺序固定：剑弓枪骑术杀狂 + EX1 + EX2（对应游戏里的职阶筛选） */
+const CLASS_ORDER = [
+  {k:'剑士', m:['剑士']}, {k:'弓兵', m:['弓兵']}, {k:'枪兵', m:['枪兵']},
+  {k:'骑兵', m:['骑兵']}, {k:'术师', m:['术师']}, {k:'暗杀', m:['暗杀']},
+  {k:'狂战', m:['狂战']},
+  {k:'EX1', m:['裁定','复仇','月癌','他我']},
+  {k:'EX2', m:['盾兵','降临','伪装','兽']}
+];
+
+const classOf = svt => {
+  const n = parseInt(svt, 10);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  return CLASS_NAME[Math.floor(n / 100000)] || '未识别';
+};
+
 const DREAMFIRE_QUARTZ = 30;
 const BOND_CAP_MAX     = 15;
 const BOND_CAP_DEFAULT = 10;
@@ -605,6 +794,7 @@ function analyze(rows, fileName){
 
     servants.push({
       key: svt || (name + '@' + no),
+      cls: classOf(svt),
       no, name, rarity: rar, rank, rankMax,
       earned, remain, dreamLevels, dreamfire, dreamLocked, nextExp
     });
@@ -635,6 +825,24 @@ function analyze(rows, fileName){
   const rarityRows = Object.values(byRarity).sort((a,b) => b.rarity - a.rarity);
   rarityRows.forEach(o => o.value = o.remain + o.dream);
 
+  const byClass = {};
+  servants.forEach(s => {
+    const k = s.cls || '未识别';
+    const o = byClass[k] || (byClass[k] = {cls:k, count:0, remain:0, dream:0});
+    o.count++; o.remain += s.remain; o.dream += s.dreamfire;
+  });
+  /* 固定顺序输出，EX1 / EX2 合并其成员职阶；空档位不显示 */
+  const classRows = CLASS_ORDER.map(g => {
+    const o = {cls:g.k, count:0, remain:0, dream:0, value:0};
+    g.m.forEach(n => { const b = byClass[n]; if (b){ o.count += b.count; o.remain += b.remain; o.dream += b.dream; } });
+    o.value = o.remain + o.dream;
+    return o;
+  }).filter(o => o.count > 0);
+  if (byClass["未识别"]) {
+    const b = byClass["未识别"];
+    classRows.push({cls:"未识别", count:b.count, remain:b.remain, dream:b.dream, value:b.remain + b.dream});
+  }
+
   const remainList = servants.filter(s => s.remain > 0).sort((a,b) =>
     b.rarity - a.rarity || b.remain - a.remain || a.name.localeCompare(b.name,'zh'));
   const dreamReady = servants.filter(s => s.dreamLevels > 0).sort((a,b) =>
@@ -650,7 +858,7 @@ function analyze(rows, fileName){
     fileName,
     date: mDate ? mDate[1] : new Date().toISOString().slice(0,10),
     accountId: mId ? mId[1] : 'unknown',
-    servants, warnings, rarityRows, remainList, dreamReady, top,
+    servants, warnings, rarityRows, classRows, remainList, dreamReady, top,
     sums: {remain, earned, dream, locked, pool, grand},
     dreamUsers,
     capped10: servants.filter(s => s.rank >= 10 && s.rankMax <= 10).length,
@@ -669,7 +877,6 @@ const pad2 = n => String(n).padStart(2,'0');
 function render(){
   const S = DATA, g = S.sums;
   const pct = g.pool > 0 ? Math.round((g.pool - g.remain) / g.pool * 100) : 0;
-  const maxCount = Math.max(1, ...S.rarityRows.map(r => r.count));
   const donutTotal = Math.max(1, S.rarityRows.reduce((a,r) => a + r.value, 0));
 
   /* 环形图：细线 + 缺口 */
@@ -685,12 +892,7 @@ function render(){
     return seg;
   }).join('');
 
-  const legend = S.rarityRows.map(r => `
-    <li>
-      <span class="sw" style="background:${color(r.rarity)}"></span>
-      <span class="lb">${r.rarity}★</span>
-      <span class="vl">${fmt(r.value)}</span>
-    </li>`).join('');
+  const maxCount = Math.max(1, ...S.rarityRows.map(r => r.count));
 
   const dist = S.rarityRows.map(r => `
     <li>
@@ -698,6 +900,43 @@ function render(){
       <span class="g"><i style="width:${Math.max(2, r.count / maxCount * 100).toFixed(1)}%;background:${color(r.rarity)};opacity:.85"></i></span>
       <span class="n">${r.count}</span>
     </li>`).join('');
+  const legend = S.rarityRows.map(r => `
+    <li>
+      <span class="sw" style="background:${color(r.rarity)}"></span>
+      <span class="lb">${r.rarity}★</span>
+      <span class="vl">${fmt(r.value)}</span>
+    </li>`).join('');
+
+
+
+  const clsMax = Math.max(1, ...S.classRows.map(r => r.value));
+  const clsTop = S.classRows.length ? S.classRows.slice().sort((a,b) => b.value - a.value)[0] : null;
+  const classDist = S.classRows.map(r => {
+    const w1 = (r.remain / clsMax * 100).toFixed(1);
+    const w2 = (r.dream / clsMax * 100).toFixed(1);
+    const isTop = clsTop && r.value === clsTop.value && r.value > 0;
+    /* 统一跟随主题色，只用深浅区分 6~9 段与梦火段 */
+    const cv = 'var(--acc)';
+    /* 最高的那一行把浅色段也提亮，避免"大部分是浅色"反而显得最淡 */
+    const lo = isTop ? 'var(--seg-top)' : 'var(--seg)';
+    return '<li>'
+      + '<span class="s">' + r.cls + '</span>'
+      + '<span class="g"><i style="width:' + w1 + '%;background:' + cv + ';opacity:' + lo + '"></i>'
+      + '<b style="width:' + w2 + '%;background:' + cv + '"></b></span>'
+      + '<span class="n' + (isTop ? ' is-max' : '') + '">' + r.value + '</span>'
+      + '<span class="m">' + r.count + ' 人</span>'
+      + '</li>';
+  }).join('');
+
+  /* 缺少 svtId 的 CSV 无法分职阶，整段隐藏 */
+  const hasCls = S.classRows.some(r => r.cls && r.cls !== '未识别');
+  const classBlock = hasCls ? [
+    '    <div class="sec">',
+    '      <div class="sec-h"><span class="num">04</span><span class="en">职阶余石</span><i class="rule"></i><span class="tail">含梦火段</span></div>',
+    '      <ul class="dist cls">' + classDist + '</ul>',
+    '      <p class="note" style="margin-top:12px">右侧数字 = 6~9 段（浅色）＋ 梦火段（深色）。EX1 = 裁定 / 复仇 / 月之癌 / 他人格；EX2 = 盾兵 / 降临 / 伪装 / 兽。高亮加粗的一行剩余最多：<b>' + (clsTop ? clsTop.cls : '-') + '</b>（' + (clsTop ? clsTop.value : 0) + ' 颗），优先刷这个职阶效率最高。</p>',
+    '    </div>'
+  ].join('\n') : '';
 
   const listRows = S.top.map((s, i) => {
     const bond = s.dreamfire > 0 ? `${s.rank}/${s.rankMax}` : `${s.rank}`;
@@ -710,15 +949,6 @@ function render(){
     </li>`;
   }).join('') || `<li style="grid-template-columns:1fr"><span class="b">全部从者的 6~9 绊奖励都已领完。</span></li>`;
 
-  const rarTable = S.rarityRows.map(r => `<tr>
-      <td class="rar" style="color:${color(r.rarity)}">${r.rarity}★</td>
-      <td>${r.count}</td>
-      <td class="dim">${ruleMax(r.rarity) || '-'}</td>
-      <td class="dim col-opt">${r.full}</td>
-      <td>${r.remain}</td>
-      <td>${r.dream}</td>
-      <td style="font-weight:700">${r.value}</td>
-    </tr>`).join('');
 
   const detail = S.remainList.map(s => `<tr>
       <td class="rar" style="color:${color(s.rarity)}">${s.rarity}★</td>
@@ -813,19 +1043,12 @@ function render(){
       </div>
     </div>
 
+    ${classBlock}
     <div class="sec">
-      <div class="sec-h"><span class="num">04</span><span class="en">剩余最多的从者</span><i class="rule"></i><span class="tail">含梦火段 · 前 10 名</span></div>
+      <div class="sec-h"><span class="num">05</span><span class="en">剩余最多的从者</span><i class="rule"></i><span class="tail">含梦火段 · 前 10 名</span></div>
       <ul class="list">${listRows}</ul>
     </div>
 
-    <div class="sec">
-      <div class="sec-h"><span class="num">05</span><span class="en">按星级汇总</span><i class="rule"></i><span class="tail">单位 颗</span></div>
-      <div class="tscroll"><table class="tbl">
-        <thead><tr><th>星级</th><th>人数</th><th>6~9满额</th><th class="col-opt">已满额</th><th>6~9剩余</th><th>梦火段</th><th>合计</th></tr></thead>
-        <tbody>${rarTable}</tbody>
-        <tfoot><tr><td>合计</td><td>${S.servants.length}</td><td></td><td></td><td>${g.remain}</td><td>${g.dream}</td><td>${g.grand}</td></tr></tfoot>
-      </table></div>
-    </div>
 
     <div class="sec">
       <div class="sec-h"><span class="num">06</span><span class="en">可领明细</span><i class="rule"></i><span class="tail">${S.remainList.length} 人有剩余</span></div>
@@ -1075,8 +1298,15 @@ function buildPng(S){
   const INK  = LIGHT ? '#0C1118' : '#EDF1F4';
   const INK2 = LIGHT ? '#49545F' : '#98A2AB';
   const INK3 = LIGHT ? '#7B858E' : '#5C656E';
-  const BLUE = LIGHT ? '#1B2FC9' : '#3D52FF';
-  const BLUE_LT = LIGHT ? '#3A4DE0' : '#7B8BFF';
+  const cssVar = (n, fb) => {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    return v || fb;
+  };
+  const BLUE = cssVar('--blue', LIGHT ? '#1B2FC9' : '#3D52FF');
+  const BLUE_LT = cssVar('--blue-lt', LIGHT ? '#3A4DE0' : '#7B8BFF');
+  /* 数据强调色：默认与主色一致，可单独替换 */
+  const ACC = BLUE;
+  const ACC_LT = BLUE_LT;
   const YEL  = LIGHT ? '#1B2FC9' : '#EDE81E';
   const LN   = LIGHT ? '#E2E6EB' : '#23282F';
   const LN2  = LIGHT ? '#BFC7D0' : '#39414B';
@@ -1136,11 +1366,11 @@ function buildPng(S){
   tx('6~9 段进度', 10, 'normal', INK2, M, y, 'left', F_SANS);
   const pct = g0.pool > 0 ? Math.round((g0.pool - g0.remain) / g0.pool * 100) : 0;
   const pctTxt = `${pct}%`;
-  tx(pctTxt, 11, '700', BLUE_LT, W - M, y - 1, 'right', F_MONO);
+  tx(pctTxt, 11, '700', ACC_LT, W - M, y - 1, 'right', F_MONO);
   tx(`${g0.pool - g0.remain} / ${g0.pool}`, 10, 'normal', INK2, W - M - meas(pctTxt, 11, '700', F_MONO) - 12, y, 'right', F_MONO);
   const barY = y + 20, barW = W - M * 2;
   rect(M, barY, barW, 8, LN, TRACK);
-  if (pct > 0) rect(M + 1, barY + 1, Math.max(4, (barW - 2) * pct / 100), 6, null, BLUE);
+  if (pct > 0) rect(M + 1, barY + 1, Math.max(4, (barW - 2) * pct / 100), 6, null, ACC);
   for (let i = 1; i < 10; i++) line(M + barW * i / 10, barY + 1, M + barW * i / 10, barY + 7, GAPC);
   y = barY + 30;
 
@@ -1239,6 +1469,15 @@ if (savedTheme !== 'light' && savedTheme !== 'dark'){
   try { savedTheme = localStorage.getItem(THEME_KEY) || 'dark'; } catch(e){ savedTheme = 'dark'; }
 }
 applyTheme(savedTheme);
+
+initAccent();
+const btnPal = document.getElementById('btnPal');
+if (btnPal) btnPal.addEventListener('click', e => { e.stopPropagation(); togglePal(); });
+document.addEventListener('click', e => {
+  const pop = document.getElementById('palPop');
+  if (pop && !pop.hidden && !e.target.closest('.pal-wrap')) togglePal(false);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') togglePal(false); });
 document.getElementById('btnTheme').addEventListener('click', () => {
   applyTheme(curTheme() === 'light' ? 'dark' : 'light');
   if (DATA) render();
