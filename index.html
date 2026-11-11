@@ -655,10 +655,16 @@ const REWARD_RULES = {
   1: {9:1},
   0: {6:2, 7:2, 8:2, 9:2}   /* 安格拉·曼纽：6~9 绊每级 2 颗 */
 };
-/* 职阶：svtId ÷ 100000 = 职阶码。现行编号不是旧资料里的 1–15，已按实测校正 */
+/* 职阶：svtId ÷ 100000 = 职阶码（不是图鉴编号，也不是旧资料里的 1–15）
+   数据来源：Atlas Academy 日服导出 basic_servant.json（2026-11 抓取，483 个从者）
+   校验结果：471 命中；未命中的 12 个是敌方/NPC 形态（所罗门、提亚马特、盖提亚、
+   BeastⅢ/R、Ⅲ/L、Ⅳ、E-玛丽系列、马里斯·卡尔迪亚斯），玩家无法持有，不会出现在羁绊表里。
+   因此只需这 16 个码即可覆盖全部可获得从者，且日服新从者沿用同一职阶码，无需再补。 */
 const CLASS_NAME = {
   1:'剑士', 2:'弓兵', 3:'枪兵', 4:'骑兵', 5:'术师', 6:'暗杀', 7:'狂战', 8:'盾兵',
-  9:'裁定', 10:'他我', 11:'复仇', 23:'月癌', 25:'降临', 28:'伪装', 33:'兽'
+  9:'裁定', 10:'他我', 11:'复仇', 23:'月癌', 25:'降临', 28:'伪装',
+  33:'兽',  /* 索多玛之兽／德拉科、Beast Eresh */
+  40:'兽'   /* Ｕ－奥尔加玛丽 unBeastOlgaMarie */
 };
 /* 显示顺序固定：剑弓枪骑术杀狂 + EX1 + EX2（对应游戏里的职阶筛选） */
 const CLASS_ORDER = [
@@ -840,7 +846,12 @@ function analyze(rows, fileName){
   }).filter(o => o.count > 0);
   if (byClass["未识别"]) {
     const b = byClass["未识别"];
-    classRows.push({cls:"未识别", count:b.count, remain:b.remain, dream:b.dream, value:b.remain + b.dream});
+    const unkList = servants.filter(s => !s.cls || s.cls === '未识别');
+    classRows.push({
+      cls:"未识别", count:b.count, remain:b.remain, dream:b.dream, value:b.remain + b.dream,
+      names: unkList.map(s => s.name),
+      codes: [...new Set(unkList.map(s => Math.floor(parseInt(s.key, 10) / 100000)).filter(n => Number.isFinite(n)))]
+    });
   }
 
   const remainList = servants.filter(s => s.remain > 0).sort((a,b) =>
@@ -910,11 +921,13 @@ function render(){
 
 
   const clsMax = Math.max(1, ...S.classRows.map(r => r.value));
-  const clsTop = S.classRows.length ? S.classRows.slice().sort((a,b) => b.value - a.value)[0] : null;
+  /* 「最高」只在已识别的职阶里评，避免把「未识别」当成推荐目标 */
+  const clsRankable = S.classRows.filter(r => r.cls !== '未识别');
+  const clsTop = clsRankable.length ? clsRankable.slice().sort((a,b) => b.value - a.value)[0] : null;
   const classDist = S.classRows.map(r => {
     const w1 = (r.remain / clsMax * 100).toFixed(1);
     const w2 = (r.dream / clsMax * 100).toFixed(1);
-    const isTop = clsTop && r.value === clsTop.value && r.value > 0;
+    const isTop = clsTop && r.cls !== '未识别' && r.value === clsTop.value && r.value > 0;
     /* 统一跟随主题色，只用深浅区分 6~9 段与梦火段 */
     const cv = 'var(--acc)';
     /* 最高的那一行把浅色段也提亮，避免"大部分是浅色"反而显得最淡 */
@@ -930,11 +943,18 @@ function render(){
 
   /* 缺少 svtId 的 CSV 无法分职阶，整段隐藏 */
   const hasCls = S.classRows.some(r => r.cls && r.cls !== '未识别');
+  /* 有未收录职阶编号的从者时，在说明里点名，方便反馈补齐 */
+  const unkRow = S.classRows.find(r => r.cls === '未识别');
+  const unkNote = unkRow && unkRow.names && unkRow.names.length
+    ? '<br>未识别：' + unkRow.names.join('、')
+      + (unkRow.codes && unkRow.codes.length ? '（职阶码 ' + unkRow.codes.join(' / ') + ' 尚未收录）' : '')
+      + ' —— 暂未计入任何职阶。'
+    : '';
   const classBlock = hasCls ? [
     '    <div class="sec">',
     '      <div class="sec-h"><span class="num">04</span><span class="en">职阶余石</span><i class="rule"></i><span class="tail">含梦火段</span></div>',
     '      <ul class="dist cls">' + classDist + '</ul>',
-    '      <p class="note" style="margin-top:12px">右侧数字 = 6~9 段（浅色）＋ 梦火段（深色）。EX1 = 裁定 / 复仇 / 月之癌 / 他人格；EX2 = 盾兵 / 降临 / 伪装 / 兽。高亮加粗的一行剩余最多：<b>' + (clsTop ? clsTop.cls : '-') + '</b>（' + (clsTop ? clsTop.value : 0) + ' 颗），优先刷这个职阶效率最高。</p>',
+    '      <p class="note" style="margin-top:12px">右侧数字 = 6~9 段（浅色）＋ 梦火段（深色）。EX1 = 裁定 / 复仇 / 月之癌 / 他人格；EX2 = 盾兵 / 降临 / 伪装 / 兽。高亮加粗的一行剩余最多：<b>' + (clsTop ? clsTop.cls : '-') + '</b>（' + (clsTop ? clsTop.value : 0) + ' 颗），优先刷这个职阶效率最高。' + unkNote + '</p>',
     '    </div>'
   ].join('\n') : '';
 
