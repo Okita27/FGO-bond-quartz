@@ -30,8 +30,6 @@
     --acc-lt:var(--blue-lt);
     --acc-ink:#FFFFFF;
     --acc-dim:var(--blue-dim);
-    /* 6~9 段的不透明度（浅色段），深色主题压得更低才分得出深浅 */
-    --seg:.45; --seg-top:.80;
     --num:#EDF1F4;
     --hl:#EDE81E;
     --warn:#EDE81E;
@@ -70,8 +68,6 @@
     --acc-lt:var(--blue-lt);
     --acc-ink:#FFFFFF;
     --acc-dim:var(--blue-dim);
-    /* 白底上浅色段要够实才不像没填，但和实色也得拉开差距 */
-    --seg:.55; --seg-top:.80;
     --num:#1B2FC9;
     --hl:#1B2FC9;
     --warn:#B07D00;
@@ -299,7 +295,7 @@
   .dist .g{display:flex}
   .dist .g > i,.dist .g > b{display:block;height:100%}
   .dist.cls li{grid-template-columns:38px 1fr 46px 58px}
-  .dist.cls .n.is-max{color:var(--acc);font-weight:700}
+  .dist.cls .n.is-max{font-weight:700}
   .dist.cls .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);text-align:right;letter-spacing:.02em}
   .dist.cls .m em{font-style:normal}
 
@@ -925,18 +921,15 @@ function render(){
   const clsRankable = S.classRows.filter(r => r.cls !== '未识别');
   const clsTop = clsRankable.length ? clsRankable.slice().sort((a,b) => b.value - a.value)[0] : null;
   const classDist = S.classRows.map(r => {
-    const w1 = (r.remain / clsMax * 100).toFixed(1);
-    const w2 = (r.dream / clsMax * 100).toFixed(1);
+    const w = (r.value / clsMax * 100).toFixed(1);
     const isTop = clsTop && r.cls !== '未识别' && r.value === clsTop.value && r.value > 0;
-    /* 统一跟随主题色，只用深浅区分 6~9 段与梦火段 */
-    const cv = 'var(--acc)';
-    /* 最高的那一行把浅色段也提亮，避免"大部分是浅色"反而显得最淡 */
-    const lo = isTop ? 'var(--seg-top)' : 'var(--seg)';
+    /* 单段实色，不再用深浅区分 6~9 与梦火；最高职阶取 5★ 色，与 03 从者分布里的 5★ 条一致 */
+    const cv = isTop ? color(5) : 'var(--acc)';
     return '<li>'
       + '<span class="s">' + r.cls + '</span>'
-      + '<span class="g"><i style="width:' + w1 + '%;background:' + cv + ';opacity:' + lo + '"></i>'
-      + '<b style="width:' + w2 + '%;background:' + cv + '"></b></span>'
-      + '<span class="n' + (isTop ? ' is-max' : '') + '">' + r.value + '</span>'
+      + '<span class="g"><i style="width:' + w + '%;background:' + cv + ';opacity:.85"></i></span>'
+      + '<span class="n' + (isTop ? ' is-max' : '') + '"'
+      + (isTop ? ' style="color:' + color(5) + '"' : '') + '>' + r.value + '</span>'
       + '<span class="m">' + r.count + ' 人</span>'
       + '</li>';
   }).join('');
@@ -954,7 +947,7 @@ function render(){
     '    <div class="sec">',
     '      <div class="sec-h"><span class="num">04</span><span class="en">职阶余石</span><i class="rule"></i><span class="tail">含梦火段</span></div>',
     '      <ul class="dist cls">' + classDist + '</ul>',
-    '      <p class="note" style="margin-top:12px">右侧数字 = 6~9 段（浅色）＋ 梦火段（深色）。EX1 = 裁定 / 复仇 / 月之癌 / 他人格；EX2 = 盾兵 / 降临 / 伪装 / 兽。高亮加粗的一行剩余最多：<b>' + (clsTop ? clsTop.cls : '-') + '</b>（' + (clsTop ? clsTop.value : 0) + ' 颗），优先刷这个职阶效率最高。' + unkNote + '</p>',
+    '      <p class="note" style="margin-top:12px">右侧数字 = 6~9 段 ＋ 梦火段。EX1 = 裁定 / 复仇 / 月之癌 / 他人格；EX2 = 盾兵 / 降临 / 伪装 / 兽。橙色加粗的一行剩余最多：<b style="color:' + color(5) + '">' + (clsTop ? clsTop.cls : '-') + '</b>（' + (clsTop ? clsTop.value : 0) + ' 颗），优先刷这个职阶效率最高。' + unkNote + '</p>',
     '    </div>'
   ].join('\n') : '';
 
